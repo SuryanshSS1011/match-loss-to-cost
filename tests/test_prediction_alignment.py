@@ -8,7 +8,7 @@ import os
 import numpy as np
 import pytest
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR
+from src.config import CONFIG, DATA_DIR, RESULTS_DIR
 
 # Auto-skip if artifacts are missing
 pytestmark = pytest.mark.integration

@@ -10,8 +10,8 @@ Compares how different forecasting models affect capacity planning decisions:
 import os
 import numpy as np
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR
-from utils import (
+from .config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR
+from .utils import (
     load_json, save_json, print_summary_table,
     plot_rmse_histogram, plot_metric_comparison, plot_capacity_bars,
     plot_timeseries_comparison

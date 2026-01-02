@@ -6,8 +6,8 @@ These are UNIT tests using synthetic fixtures - no trained artifacts required.
 import numpy as np
 import pytest
 
-from config import CONFIG
-from eval_capacity import compute_capacities, compute_utilization_metrics
+from src.config import CONFIG
+from src.eval_capacity import compute_capacities, compute_utilization_metrics
 
 
 class TestIdentityForecast:

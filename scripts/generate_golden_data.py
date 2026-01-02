@@ -13,7 +13,7 @@ import numpy as np
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import save_json
+from src.utils import save_json
 
 # Output paths
 FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests', 'fixtures')

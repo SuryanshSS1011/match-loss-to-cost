@@ -8,8 +8,8 @@ import numpy as np
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR
-from eval_capacity import load_predictions, compute_capacities, compute_utilization_metrics
+from src.config import CONFIG, DATA_DIR, RESULTS_DIR
+from src.eval_capacity import load_predictions, compute_capacities, compute_utilization_metrics
 
 
 @pytest.fixture

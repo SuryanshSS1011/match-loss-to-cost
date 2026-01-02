@@ -13,8 +13,12 @@ import argparse
 from datetime import datetime
 import numpy as np
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR
-from utils import set_all_seeds, save_json, load_json
+# Add project root to path
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
+
+from src.config import CONFIG, DATA_DIR, RESULTS_DIR
+from src.utils import set_all_seeds, save_json, load_json
 
 
 # Default seeds for reproducibility
@@ -76,46 +80,44 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
     print(f"Running seed {seed}")
     print(f"{'='*50}")
 
-    # Import and run each stage
-    # Note: These would need to be refactored to accept config and output_dir
-    # For now, we'll run as subprocesses with environment variables
+    # Import modules fresh for each seed to reset state
+    import importlib
 
     # Run data generation
     print(f"\n[Seed {seed}] Generating traffic data...")
-    result = subprocess.run(
-        [sys.executable, 'generate_traffic.py'],
-        capture_output=True, text=True,
-        env={**os.environ, 'RANDOM_SEED': str(seed)}
-    )
-    if result.returncode != 0:
-        print(f"Error in generate_traffic.py: {result.stderr}")
+    try:
+        from src import simulate_data
+        importlib.reload(simulate_data)
+        simulate_data.main()
+    except Exception as e:
+        print(f"Error in simulate_data: {e}")
 
     # Run SARIMA training
     print(f"\n[Seed {seed}] Training SARIMA...")
-    result = subprocess.run(
-        [sys.executable, 'train_sarima.py'],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f"Error in train_sarima.py: {result.stderr}")
+    try:
+        from src import train_arima
+        importlib.reload(train_arima)
+        train_arima.main()
+    except Exception as e:
+        print(f"Error in train_arima: {e}")
 
     # Run LSTM training
     print(f"\n[Seed {seed}] Training LSTM...")
-    result = subprocess.run(
-        [sys.executable, 'train_lstm.py'],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f"Error in train_lstm.py: {result.stderr}")
+    try:
+        from src import train_lstm
+        importlib.reload(train_lstm)
+        train_lstm.main()
+    except Exception as e:
+        print(f"Error in train_lstm: {e}")
 
     # Run evaluation
     print(f"\n[Seed {seed}] Running evaluation...")
-    result = subprocess.run(
-        [sys.executable, 'eval_capacity.py'],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f"Error in eval_capacity.py: {result.stderr}")
+    try:
+        from src import eval_capacity
+        importlib.reload(eval_capacity)
+        eval_capacity.main()
+    except Exception as e:
+        print(f"Error in eval_capacity: {e}")
 
     # Load results
     try:

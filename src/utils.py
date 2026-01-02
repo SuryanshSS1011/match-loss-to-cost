@@ -91,7 +91,7 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray,
         Dictionary with per-link RMSE, MAE, MAPE, sMAPE arrays
         and MAPE exclusion diagnostics
     """
-    from config import CONFIG
+    from .config import CONFIG
 
     if mape_threshold is None:
         mape_threshold = CONFIG.get('mape_threshold', 1.0)

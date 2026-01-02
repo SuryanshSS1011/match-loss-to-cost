@@ -8,8 +8,8 @@ import os
 import numpy as np
 import pytest
 
-from config import DATA_DIR, RESULTS_DIR
-from utils import load_json
+from src.config import DATA_DIR, RESULTS_DIR
+from src.utils import load_json
 
 # Auto-skip if artifacts are missing
 pytestmark = pytest.mark.integration

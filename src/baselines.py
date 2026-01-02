@@ -16,8 +16,8 @@ import os
 import numpy as np
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR
-from utils import compute_metrics, aggregate_metrics, save_json
+from .config import CONFIG, DATA_DIR, RESULTS_DIR
+from .utils import compute_metrics, aggregate_metrics, save_json
 
 
 def naive_forecast(L_full: np.ndarray, test_start: int, test_end: int) -> np.ndarray:

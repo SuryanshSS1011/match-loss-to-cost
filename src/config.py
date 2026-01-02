@@ -4,8 +4,8 @@ Global configuration for network traffic forecasting experiment.
 
 import os
 
-# Project paths
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+# Project paths (go up one level from src/)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 MODELS_DIR = os.path.join(PROJECT_ROOT, 'models')
 RESULTS_DIR = os.path.join(PROJECT_ROOT, 'results')

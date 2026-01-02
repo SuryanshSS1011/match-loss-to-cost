@@ -11,8 +11,8 @@ import numpy as np
 from joblib import Parallel, delayed
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR
-from utils import set_all_seeds, compute_metrics, aggregate_metrics, save_json
+from .config import CONFIG, DATA_DIR, RESULTS_DIR
+from .utils import set_all_seeds, compute_metrics, aggregate_metrics, save_json
 
 
 def load_link_loads():

@@ -4,9 +4,9 @@ import os
 import numpy as np
 import pytest
 
-from config import CONFIG
-from eval_capacity import compute_capacities, compute_utilization_metrics
-from utils import load_json
+from src.config import CONFIG
+from src.eval_capacity import compute_capacities, compute_utilization_metrics
+from src.utils import load_json
 
 
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')

@@ -14,10 +14,10 @@ import time
 import argparse
 
 # Add project root to path
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-from config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR
+from src.config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR
 
 
 def run_data_generation():
@@ -26,7 +26,7 @@ def run_data_generation():
     print("# STEP 1: DATA GENERATION")
     print("#" * 60)
 
-    from simulate_data import main as simulate_main
+    from src.simulate_data import main as simulate_main
     simulate_main()
 
 
@@ -36,7 +36,7 @@ def run_sarima_training():
     print("# STEP 2: SARIMA MODEL TRAINING")
     print("#" * 60)
 
-    from train_arima import main as arima_main
+    from src.train_arima import main as arima_main
     arima_main()
 
 
@@ -46,7 +46,7 @@ def run_lstm_training():
     print("# STEP 3: LSTM MODEL TRAINING")
     print("#" * 60)
 
-    from train_lstm import main as lstm_main
+    from src.train_lstm import main as lstm_main
     lstm_main()
 
 
@@ -56,7 +56,7 @@ def run_evaluation():
     print("# STEP 4: CAPACITY PLANNING EVALUATION")
     print("#" * 60)
 
-    from eval_capacity import main as eval_main
+    from src.eval_capacity import main as eval_main
     eval_main()
 
 

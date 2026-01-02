@@ -32,3 +32,9 @@
 - `pytest.ini` with integration test marker
 - Auto-skip integration tests when artifacts missing
 - Normalization stats saved to `results/normalization_stats.json` for reproducibility
+
+### Project Structure
+
+- Reorganized into `src/` (core modules), `scripts/` (entry points), `tests/`
+- Moved `paper.tex` and `paper.pdf` to project root
+- Updated all imports to use `src.*` package structure

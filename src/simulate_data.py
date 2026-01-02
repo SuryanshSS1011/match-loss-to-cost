@@ -13,8 +13,8 @@ import pickle
 import numpy as np
 import networkx as nx
 
-from config import CONFIG, DATA_DIR
-from utils import set_all_seeds
+from .config import CONFIG, DATA_DIR
+from .utils import set_all_seeds
 
 
 def create_topology(num_nodes: int, k: int, p: float, seed: int) -> tuple:
