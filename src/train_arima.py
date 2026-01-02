@@ -139,7 +139,7 @@ def main():
         forecast_steps=T_test,
         order=order,
         seasonal_order=seasonal_order,
-        n_jobs=-1
+        n_jobs=2  # Reduced from -1 to avoid OOM on 16GB systems
     )
 
     print(f"\n   Predictions shape: {predictions.shape}")
