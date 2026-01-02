@@ -1,0 +1,11 @@
+{
+  "config": {
+    "capacity_margin": 1.1
+  },
+  "expected_oracle": {
+    "f_over_mean": 0,
+    "links_over_100": 0,
+    "links_over_110": 0,
+    "u_max_mean": 0.9090909090909091
+  }
+}

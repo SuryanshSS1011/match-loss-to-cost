@@ -6,3 +6,5 @@ statsmodels
 torch
 scikit-learn
 joblib
+pytest
+scipy

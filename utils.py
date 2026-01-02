@@ -53,40 +53,88 @@ def make_sequences(L: np.ndarray, window_size: int) -> tuple:
     return X, y
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, epsilon: float = 1e-3) -> dict:
+def compute_smape(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    """
+    Compute Symmetric MAPE (sMAPE) per link.
+
+    sMAPE handles zeros and near-zeros better than MAPE by using
+    the average of true and predicted values in the denominator.
+
+    sMAPE = 100 * mean(|y - ŷ| / ((|y| + |ŷ|) / 2))
+
+    Args:
+        y_true: True values of shape (T, num_links)
+        y_pred: Predicted values of shape (T, num_links)
+
+    Returns:
+        Per-link sMAPE array of shape (num_links,)
+    """
+    numerator = np.abs(y_true - y_pred)
+    denominator = (np.abs(y_true) + np.abs(y_pred)) / 2
+    denominator = np.maximum(denominator, 1e-6)  # Avoid division by zero
+
+    return 100 * np.mean(numerator / denominator, axis=0)
+
+
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray,
+                    mape_threshold: float = None) -> dict:
     """
     Compute forecasting metrics per link.
 
     Args:
         y_true: True values of shape (T, num_links)
         y_pred: Predicted values of shape (T, num_links)
-        epsilon: Small constant to avoid division by zero in MAPE
+        mape_threshold: Minimum y_true value to include in MAPE
+                        (default: from CONFIG['mape_threshold'])
 
     Returns:
-        Dictionary with per-link RMSE, MAE, and MAPE arrays
+        Dictionary with per-link RMSE, MAE, MAPE, sMAPE arrays
+        and MAPE exclusion diagnostics
     """
+    from config import CONFIG
+
+    if mape_threshold is None:
+        mape_threshold = CONFIG.get('mape_threshold', 1.0)
+
     # Per-link RMSE
     rmse = np.sqrt(np.mean((y_true - y_pred) ** 2, axis=0))
 
     # Per-link MAE
     mae = np.mean(np.abs(y_true - y_pred), axis=0)
 
-    # Per-link MAPE (only consider points where y_true > threshold to avoid inflation)
-    # Mask out very small values that cause MAPE to explode
-    threshold = 1.0  # Minimum value to include in MAPE calculation
-    mask = y_true > threshold
-    mape = np.zeros(y_true.shape[1])
-    for l in range(y_true.shape[1]):
-        link_mask = mask[:, l]
-        if link_mask.sum() > 0:
-            mape[l] = 100 * np.mean(np.abs(y_true[link_mask, l] - y_pred[link_mask, l]) / y_true[link_mask, l])
+    # Per-link sMAPE (symmetric MAPE - handles zeros better)
+    smape = compute_smape(y_true, y_pred)
+
+    # Per-link MAPE with threshold masking
+    # Points where y_true < threshold are excluded to avoid inflation
+    # Note: Loop is acceptable for small num_links; vectorize if scaling up
+    mask = y_true > mape_threshold
+    num_links = y_true.shape[1]
+    mape = np.zeros(num_links)
+    pct_excluded = np.zeros(num_links)
+
+    for link in range(num_links):
+        link_mask = mask[:, link]
+        valid_count = link_mask.sum()
+        total_count = len(link_mask)
+
+        pct_excluded[link] = 100 * (1 - valid_count / total_count)
+
+        if valid_count > 0:
+            mape[link] = 100 * np.mean(
+                np.abs(y_true[link_mask, link] - y_pred[link_mask, link]) /
+                y_true[link_mask, link]
+            )
         else:
-            mape[l] = np.nan
+            mape[link] = np.nan
 
     return {
         'rmse': rmse,
         'mae': mae,
-        'mape': mape
+        'mape': mape,
+        'smape': smape,
+        'mape_pct_excluded': pct_excluded,
+        'mape_threshold': mape_threshold
     }
 
 
@@ -98,15 +146,28 @@ def aggregate_metrics(per_link_metrics: dict) -> dict:
         per_link_metrics: Dictionary with per-link metric arrays
 
     Returns:
-        Dictionary with mean, median, and 90th percentile for each metric
+        Dictionary with mean, median, and 90th percentile for each metric,
+        plus MAPE configuration if present
     """
     aggregated = {}
 
-    for metric_name, values in per_link_metrics.items():
+    # Metrics to aggregate (skip non-array fields)
+    array_metrics = ['rmse', 'mae', 'mape', 'smape', 'mape_pct_excluded']
+
+    for metric_name in array_metrics:
+        if metric_name not in per_link_metrics:
+            continue
+        values = per_link_metrics[metric_name]
+        if not isinstance(values, np.ndarray):
+            continue
         # Use nan-aware functions to handle masked MAPE values
         aggregated[f'{metric_name}_mean'] = float(np.nanmean(values))
         aggregated[f'{metric_name}_median'] = float(np.nanmedian(values))
         aggregated[f'{metric_name}_p90'] = float(np.nanpercentile(values, 90))
+
+    # Include MAPE threshold if present
+    if 'mape_threshold' in per_link_metrics:
+        aggregated['mape_threshold'] = per_link_metrics['mape_threshold']
 
     return aggregated
 
@@ -272,6 +333,56 @@ def plot_capacity_bars(capacity_metrics: dict, metric_name: str,
     plt.close()
 
 
+def check_periodicity(L: np.ndarray, expected_period: int = 288,
+                       link_idx: int = 0, min_peak_height: float = 0.3) -> bool:
+    """
+    Verify time series has expected periodicity via autocorrelation.
+
+    This is an OPTIONAL DIAGNOSTIC - call manually to verify data generation
+    produces the expected daily periodicity. Not run automatically.
+
+    Uses ACF peak detection to confirm the data has strong periodicity
+    at the expected period (e.g., daily = 288 steps at 5-min intervals).
+
+    Args:
+        L: Link load array of shape (T, num_links)
+        expected_period: Expected periodicity in time steps (default: 288 = 1 day)
+        link_idx: Which link to analyze (default: 0)
+        min_peak_height: Minimum ACF peak height to consider significant
+
+    Returns:
+        True if periodicity is confirmed, False otherwise
+    """
+    from scipy import signal
+
+    # Use a representative link
+    link_data = L[:, link_idx]
+
+    # Compute autocorrelation (normalized)
+    link_centered = link_data - link_data.mean()
+    acf = np.correlate(link_centered, link_centered, mode='full')
+    acf = acf[len(acf) // 2:]  # Keep positive lags only
+    acf = acf / acf[0]  # Normalize
+
+    # Find peaks in ACF
+    peaks, properties = signal.find_peaks(acf, height=min_peak_height)
+
+    # Check for peak near expected_period (within 5 steps tolerance)
+    tolerance = 5
+    near_expected = [p for p in peaks if abs(p - expected_period) <= tolerance]
+
+    if near_expected:
+        peak_height = acf[near_expected[0]]
+        print(f"   ✓ Periodicity confirmed: peak at lag {near_expected[0]} "
+              f"(expected {expected_period}), ACF = {peak_height:.3f}")
+        return True
+    else:
+        nearby_peaks = peaks[:10] if len(peaks) > 0 else []
+        print(f"   ⚠ No strong peak near {expected_period}. "
+              f"Peaks found at lags: {list(nearby_peaks)}")
+        return False
+
+
 def print_summary_table(forecasting_metrics: dict, capacity_metrics: dict) -> None:
     """Print a formatted summary table of all results."""
     print("\n" + "=" * 60)
@@ -283,7 +394,7 @@ def print_summary_table(forecasting_metrics: dict, capacity_metrics: dict) -> No
     print(f"{'Metric':<15} {'SARIMA':>12} {'LSTM':>12}")
     print("-" * 40)
 
-    for metric in ['rmse_mean', 'mae_mean', 'mape_mean']:
+    for metric in ['rmse_mean', 'mae_mean', 'mape_mean', 'smape_mean']:
         sarima_val = forecasting_metrics.get('SARIMA', {}).get(metric, 'N/A')
         lstm_val = forecasting_metrics.get('LSTM', {}).get(metric, 'N/A')
 
@@ -298,9 +409,16 @@ def print_summary_table(forecasting_metrics: dict, capacity_metrics: dict) -> No
             lstm_str = str(lstm_val)
 
         metric_label = metric.replace('_mean', '').upper()
-        if 'mape' in metric:
+        if 'mape' in metric.lower() or 'smape' in metric.lower():
             metric_label += ' (%)'
         print(f"{metric_label:<15} {sarima_str:>12} {lstm_str:>12}")
+
+    # Show MAPE exclusion info if available
+    mape_threshold = forecasting_metrics.get('SARIMA', {}).get('mape_threshold')
+    mape_excluded = forecasting_metrics.get('SARIMA', {}).get('mape_pct_excluded_mean')
+    if mape_threshold is not None and mape_excluded is not None:
+        print(f"\n   Note: MAPE excludes points where y < {mape_threshold} "
+              f"({mape_excluded:.1f}% of data)")
 
     # Capacity planning metrics
     print("\n--- Capacity Planning Metrics ---\n")

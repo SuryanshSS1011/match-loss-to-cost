@@ -41,13 +41,14 @@ CONFIG = {
     'burst_factor_max': 5,
 
     # Forecasting model parameters
-    'window_size': 24,  # 2 hours at 5-min intervals
+    # LSTM window=72 (6 hours) captures partial-cycle context for computational efficiency
+    # Daily structure is captured by Seasonal Naive baseline and SARIMA seasonal component
+    'window_size': 72,  # 6 hours at 5-min intervals
 
     # SARIMA parameters
     'arima_order': (2, 1, 2),
-    # Using s=72 (6 hours) instead of s=288 (24 hours) for computational feasibility
-    # Still captures intra-day patterns while being much faster to fit
-    'seasonal_order': (1, 0, 1, 72),
+    # Using s=288 (24 hours) to match generator's daily periodicity
+    'seasonal_order': (1, 0, 1, 288),
 
     # LSTM parameters
     'lstm_hidden_size': 64,
@@ -58,8 +59,12 @@ CONFIG = {
     'lstm_patience': 5,  # early stopping patience
 
     # Capacity planning
-    'capacity_percentile': 95,
-    'capacity_margin': 1.1,  # 10% safety margin
+    'capacity_method': 'max',  # Use max over eval window per paper definition
+    'capacity_margin': 1.1,    # α = 10% safety margin
+
+    # MAPE calculation
+    # Points where y_true < mape_threshold are excluded to avoid inflation
+    'mape_threshold': 1.0,
 }
 
 # Derived constants

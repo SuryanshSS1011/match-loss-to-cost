@@ -282,6 +282,17 @@ def main():
     }, model_path)
     print(f"   Saved to: {model_path}")
 
+    # Save normalization stats for reproducibility and testing
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    data = np.load(os.path.join(DATA_DIR, 'traffic_data.npz'))
+    train_end = int(data['train_end'])
+    save_json({
+        'mean': mean.tolist(),
+        'std': std.tolist(),
+        'train_end': train_end
+    }, os.path.join(RESULTS_DIR, 'normalization_stats.json'))
+    print(f"   Saved normalization stats to: {RESULTS_DIR}/normalization_stats.json")
+
     # Generate predictions
     print("\n5. Generating predictions...")
     predictions = predict(model, X_test, mean, std, device)
