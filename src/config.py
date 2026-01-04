@@ -47,8 +47,8 @@ CONFIG = {
 
     # SARIMA parameters
     'arima_order': (2, 1, 2),
-    # Using s=288 (24 hours) to match generator's daily periodicity
-    'seasonal_order': (1, 0, 1, 288),
+    # Using s=72 (6 hours) to match LSTM window size for fair comparison
+    'seasonal_order': (1, 0, 1, 72),
 
     # LSTM parameters
     'lstm_hidden_size': 64,
