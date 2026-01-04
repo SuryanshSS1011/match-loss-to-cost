@@ -35,6 +35,7 @@ models/*.pth
 
 # Results - predictions are large/regenerable, but keep JSON metrics
 results/*.npz
+results/seed_*/*.npz
 # results/*.json  # Keep JSON metrics for quick reference
 
 # Plots - keep for visual reference
