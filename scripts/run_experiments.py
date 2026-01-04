@@ -61,10 +61,14 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
     import src.config as config_module
 
     # Update the CONFIG dict in the module itself
+    # This must happen BEFORE any module that reads CONFIG is imported/reloaded
     config_module.CONFIG['random_seed'] = seed
 
-    # Set all RNGs
+    # Set all RNGs globally
     set_all_seeds(seed)
+
+    # Verify seed is set correctly
+    print(f"\n   Using random seed: {config_module.CONFIG['random_seed']}")
 
     # Create seed-specific output directory
     if base_dir is None:
