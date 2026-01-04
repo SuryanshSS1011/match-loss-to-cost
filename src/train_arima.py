@@ -139,7 +139,7 @@ def main():
         forecast_steps=T_test,
         order=order,
         seasonal_order=seasonal_order,
-        n_jobs=-1  # Use all CPUs (requires 32GB+ RAM for s=288)
+        n_jobs=-1  # Use all CPUs 
     )
 
     print(f"\n   Predictions shape: {predictions.shape}")

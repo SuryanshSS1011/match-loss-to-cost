@@ -10,6 +10,7 @@ import os
 import sys
 import subprocess
 import argparse
+import shutil
 from datetime import datetime
 import numpy as np
 
@@ -17,7 +18,7 @@ import numpy as np
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-from src.config import CONFIG, DATA_DIR, RESULTS_DIR
+from src.config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR, MODELS_DIR
 from src.utils import set_all_seeds, save_json, load_json
 
 
@@ -40,7 +41,7 @@ def log_run_metadata(seed: int, output_dir: str, config: dict):
     metadata = {
         'seed': seed,
         'git': get_git_info(),
-        'config': config,
+        'config': {k: str(v) for k, v in config.items()},  # Convert tuples to strings
         'timestamp': datetime.now().isoformat()
     }
     save_json(metadata, os.path.join(output_dir, 'run_metadata.json'))
@@ -50,8 +51,6 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
     """
     Run full pipeline with given seed, return metrics.
 
-    Creates isolated output directory per seed.
-
     Args:
         seed: Random seed to use
         base_dir: Base directory for outputs (default: results/)
@@ -59,9 +58,10 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
     Returns:
         Dictionary with headline metrics from this seed
     """
-    # Create isolated config (don't mutate global)
-    config = dict(CONFIG)
-    config['random_seed'] = seed
+    import src.config as config_module
+
+    # Update the CONFIG dict in the module itself
+    config_module.CONFIG['random_seed'] = seed
 
     # Set all RNGs
     set_all_seeds(seed)
@@ -74,7 +74,7 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
     os.makedirs(seed_dir, exist_ok=True)
 
     # Log metadata
-    log_run_metadata(seed, seed_dir, config)
+    log_run_metadata(seed, seed_dir, config_module.CONFIG)
 
     print(f"\n{'='*50}")
     print(f"Running seed {seed}")
@@ -91,6 +91,9 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
         simulate_data.main()
     except Exception as e:
         print(f"Error in simulate_data: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'seed': seed, 'error': f'simulate_data: {e}'}
 
     # Run SARIMA training
     print(f"\n[Seed {seed}] Training SARIMA...")
@@ -100,6 +103,9 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
         train_arima.main()
     except Exception as e:
         print(f"Error in train_arima: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'seed': seed, 'error': f'train_arima: {e}'}
 
     # Run LSTM training
     print(f"\n[Seed {seed}] Training LSTM...")
@@ -109,6 +115,9 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
         train_lstm.main()
     except Exception as e:
         print(f"Error in train_lstm: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'seed': seed, 'error': f'train_lstm: {e}'}
 
     # Run evaluation
     print(f"\n[Seed {seed}] Running evaluation...")
@@ -118,9 +127,22 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
         eval_capacity.main()
     except Exception as e:
         print(f"Error in eval_capacity: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'seed': seed, 'error': f'eval_capacity: {e}'}
 
-    # Load results
+    # Load and save results to seed-specific directory
     try:
+        # Copy results to seed directory
+        for fname in ['sarima_predictions.npz', 'lstm_predictions.npz',
+                      'sarima_metrics.json', 'lstm_metrics.json',
+                      'capacity_planning.json', 'combined_results.json']:
+            src_path = os.path.join(RESULTS_DIR, fname)
+            dst_path = os.path.join(seed_dir, fname)
+            if os.path.exists(src_path):
+                shutil.copy2(src_path, dst_path)
+
+        # Load metrics
         combined = load_json(os.path.join(RESULTS_DIR, 'combined_results.json'))
         sarima_metrics = combined['forecasting']['SARIMA']
         lstm_metrics = combined['forecasting']['LSTM']
@@ -141,6 +163,8 @@ def run_single_seed(seed: int, base_dir: str = None) -> dict:
         }
     except Exception as e:
         print(f"Error loading results for seed {seed}: {e}")
+        import traceback
+        traceback.print_exc()
         return {'seed': seed, 'error': str(e)}
 
 
@@ -262,6 +286,12 @@ def main():
     for seed in seeds:
         result = run_single_seed(seed, base_dir)
         results.append(result)
+
+        # Print intermediate result
+        if 'error' not in result:
+            print(f"\n   [Seed {seed}] SARIMA RMSE: {result['sarima_rmse']:.4f}, LSTM RMSE: {result['lstm_rmse']:.4f}")
+        else:
+            print(f"\n   [Seed {seed}] FAILED: {result['error']}")
 
     # Aggregate results
     aggregated = aggregate_multi_seed(results)
