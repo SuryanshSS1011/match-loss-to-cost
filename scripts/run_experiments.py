@@ -19,7 +19,11 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 from src.config import CONFIG, DATA_DIR, RESULTS_DIR, PLOTS_DIR, MODELS_DIR
-from src.utils import set_all_seeds, save_json, load_json
+from src.utils import (
+    set_all_seeds, save_json, load_json,
+    plot_metric_comparison_with_error, plot_capacity_bars_with_error,
+    plot_rmse_histogram_aggregated
+)
 
 
 # Default seeds for reproducibility
@@ -267,6 +271,92 @@ def print_multi_seed_summary(aggregated: dict):
     print("\n" + "=" * 70)
 
 
+def generate_aggregated_plots(aggregated: dict, output_dir: str = None, base_dir: str = None):
+    """
+    Generate plots with error bars from aggregated multi-seed results.
+
+    Args:
+        aggregated: Dictionary with aggregated statistics from aggregate_multi_seed()
+        output_dir: Directory to save plots (default: PLOTS_DIR)
+        base_dir: Base directory containing seed folders (default: RESULTS_DIR)
+    """
+    if output_dir is None:
+        output_dir = PLOTS_DIR
+    if base_dir is None:
+        base_dir = RESULTS_DIR
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    print("\nGenerating aggregated plots with error bars...")
+
+    # Forecasting metrics
+    forecast_metrics = [
+        ('rmse', 'RMSE', 'Forecasting: RMSE (mean ± std across seeds)'),
+        ('mae', 'MAE', 'Forecasting: MAE (mean ± std across seeds)'),
+        ('mape', 'MAPE (%)', 'Forecasting: MAPE (mean ± std across seeds)')
+    ]
+
+    for metric_key, ylabel, title in forecast_metrics:
+        sarima_key = f'sarima_{metric_key}'
+        lstm_key = f'lstm_{metric_key}'
+
+        if sarima_key not in aggregated or lstm_key not in aggregated:
+            continue
+
+        models = ['SARIMA', 'LSTM']
+        means = [aggregated[sarima_key]['mean'], aggregated[lstm_key]['mean']]
+        stds = [aggregated[sarima_key]['std'], aggregated[lstm_key]['std']]
+
+        save_path = os.path.join(output_dir, f'aggregated_forecast_{metric_key}.png')
+        plot_metric_comparison_with_error(ylabel, models, means, stds, title, save_path)
+        print(f"   - Saved {save_path}")
+
+    # Capacity planning metrics
+    capacity_metrics = [
+        ('u_max', 'U Max', 'Capacity Planning: Max Utilization (mean ± std)'),
+        ('f_over', 'Overload Rate', 'Capacity Planning: Overload Fraction (mean ± std)')
+    ]
+
+    for metric_key, ylabel, title in capacity_metrics:
+        sarima_key = f'sarima_{metric_key}'
+        lstm_key = f'lstm_{metric_key}'
+
+        if sarima_key not in aggregated or lstm_key not in aggregated:
+            continue
+
+        models = ['SARIMA', 'LSTM']
+        means = [aggregated[sarima_key]['mean'], aggregated[lstm_key]['mean']]
+        stds = [aggregated[sarima_key]['std'], aggregated[lstm_key]['std']]
+
+        save_path = os.path.join(output_dir, f'aggregated_capacity_{metric_key}.png')
+        plot_capacity_bars_with_error(metric_key, models, means, stds, title, save_path)
+        print(f"   - Saved {save_path}")
+
+    # Generate aggregated RMSE histogram from per-seed data
+    seeds = aggregated.get('seeds', [])
+    if seeds:
+        print("   - Generating aggregated RMSE histogram...")
+        rmse_per_seed = {'SARIMA': [], 'LSTM': []}
+
+        for seed in seeds:
+            seed_dir = os.path.join(base_dir, f'seed_{seed}')
+            sarima_path = os.path.join(seed_dir, 'sarima_metrics.json')
+            lstm_path = os.path.join(seed_dir, 'lstm_metrics.json')
+
+            if os.path.exists(sarima_path) and os.path.exists(lstm_path):
+                sarima_metrics = load_json(sarima_path)
+                lstm_metrics = load_json(lstm_path)
+                rmse_per_seed['SARIMA'].append(sarima_metrics['per_link']['rmse'])
+                rmse_per_seed['LSTM'].append(lstm_metrics['per_link']['rmse'])
+
+        if rmse_per_seed['SARIMA'] and rmse_per_seed['LSTM']:
+            save_path = os.path.join(output_dir, 'aggregated_rmse_histogram.png')
+            plot_rmse_histogram_aggregated(rmse_per_seed, save_path)
+            print(f"   - Saved {save_path}")
+
+    print("Aggregated plots complete!")
+
+
 def main():
     """Run multi-seed experiments."""
     parser = argparse.ArgumentParser(description='Run multi-seed experiments')
@@ -302,6 +392,10 @@ def main():
 
     # Save aggregated results
     save_json(aggregated, os.path.join(base_dir, 'aggregated_results.json'))
+
+    # Generate aggregated plots with error bars
+    if 'error' not in aggregated:
+        generate_aggregated_plots(aggregated, PLOTS_DIR)
 
     # Print summary
     print_multi_seed_summary(aggregated)

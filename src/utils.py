@@ -333,6 +333,131 @@ def plot_capacity_bars(capacity_metrics: dict, metric_name: str,
     plt.close()
 
 
+def plot_metric_comparison_with_error(metric_name: str, models: list,
+                                       means: list, stds: list,
+                                       title: str, save_path: str) -> None:
+    """
+    Create bar chart comparing a metric across models with error bars.
+
+    Args:
+        metric_name: Name of the metric being plotted
+        models: List of model names
+        means: List of mean values
+        stds: List of std values
+        title: Plot title
+        save_path: Path to save the figure
+    """
+    plt.figure(figsize=(8, 5))
+    colors = ['steelblue', 'darkorange', 'green'][:len(models)]
+    x = np.arange(len(models))
+
+    bars = plt.bar(x, means, yerr=stds, capsize=5, color=colors,
+                   edgecolor='black', alpha=0.8)
+
+    # Add value labels on bars
+    for bar, mean, std in zip(bars, means, stds):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + std + 0.02 * max(means),
+                 f'{mean:.2f}±{std:.2f}', ha='center', va='bottom', fontsize=9)
+
+    plt.xticks(x, models)
+    plt.xlabel('Model')
+    plt.ylabel(metric_name.replace('_', ' ').title())
+    plt.title(title)
+    plt.tight_layout()
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+
+
+def plot_rmse_histogram_aggregated(rmse_per_seed: dict, save_path: str) -> None:
+    """
+    Plot histogram of per-link RMSE averaged across seeds.
+
+    Args:
+        rmse_per_seed: Dict mapping model name to list of per-link RMSE arrays (one per seed)
+        save_path: Path to save the figure
+    """
+    n_models = len(rmse_per_seed)
+    fig, axes = plt.subplots(1, n_models, figsize=(5 * n_models, 4), sharey=True)
+
+    if n_models == 1:
+        axes = [axes]
+
+    colors = ['steelblue', 'darkorange', 'green']
+
+    for ax, (model_name, rmse_arrays), color in zip(axes, rmse_per_seed.items(), colors):
+        # Average RMSE per link across seeds
+        rmse_stacked = np.stack(rmse_arrays, axis=0)  # (n_seeds, n_links)
+        rmse_mean = np.mean(rmse_stacked, axis=0)  # (n_links,)
+        rmse_std = np.std(rmse_stacked, axis=0)
+
+        ax.hist(rmse_mean, bins=15, color=color, edgecolor='black', alpha=0.7)
+        ax.set_xlabel('RMSE (mean across seeds)')
+        ax.set_ylabel('Number of Links')
+        ax.set_title(f'{model_name} Per-Link RMSE Distribution')
+
+        mean_val = np.mean(rmse_mean)
+        ax.axvline(mean_val, color='red', linestyle='--',
+                   label=f'Mean: {mean_val:.2f}')
+        ax.legend()
+
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+
+
+def plot_capacity_bars_with_error(metric_name: str, models: list,
+                                   means: list, stds: list,
+                                   title: str, save_path: str) -> None:
+    """
+    Create bar chart for capacity planning metrics with error bars.
+
+    Args:
+        metric_name: Name of metric to plot (e.g., 'u_max_mean')
+        models: List of model names
+        means: List of mean values
+        stds: List of std values
+        title: Plot title
+        save_path: Path to save figure
+    """
+    plt.figure(figsize=(8, 5))
+    colors = ['steelblue', 'darkorange', 'green'][:len(models)]
+    x = np.arange(len(models))
+
+    bars = plt.bar(x, means, yerr=stds, capsize=5, color=colors,
+                   edgecolor='black', alpha=0.8)
+
+    # Add value labels
+    for bar, mean, std in zip(bars, means, stds):
+        if 'f_over' in metric_name:
+            label = f'{mean*100:.1f}%±{std*100:.1f}%'
+        else:
+            label = f'{mean:.2f}±{std:.2f}'
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + std + 0.02 * max(means),
+                 label, ha='center', va='bottom', fontsize=9)
+
+    # Add reference line at 1.0 for utilization metrics
+    if 'u_max' in metric_name:
+        plt.axhline(1.0, color='red', linestyle='--', linewidth=1.5,
+                    label='100% Utilization')
+        plt.legend()
+
+    plt.xticks(x, models)
+    plt.xlabel('Model')
+    ylabel = metric_name.replace('_', ' ').title()
+    if 'f_over' in metric_name:
+        ylabel = 'Overload Fraction (%)'
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.tight_layout()
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+
+
 def check_periodicity(L: np.ndarray, expected_period: int = 288,
                        link_idx: int = 0, min_peak_height: float = 0.3) -> bool:
     """

@@ -75,9 +75,9 @@ Results from multi-seed experiments (n=5 seeds: 42, 123, 456, 789, 1024) showing
 | SARIMA | 25.32 ± 1.70 | 20.45 ± 1.59 | 47.3% ± 3.0% |
 | LSTM | **16.50 ± 0.21** | **12.17 ± 0.13** | **26.0% ± 0.7%** |
 
-| RMSE Comparison | MAE Comparison | MAPE Comparison |
-|:---------------:|:--------------:|:---------------:|
-| ![RMSE](plots/forecast_rmse_mean.png) | ![MAE](plots/forecast_mae_mean.png) | ![MAPE](plots/forecast_mape_mean.png) |
+| RMSE (mean ± std) | MAE (mean ± std) | MAPE (mean ± std) |
+|:-----------------:|:----------------:|:-----------------:|
+| ![RMSE](plots/aggregated_forecast_rmse.png) | ![MAE](plots/aggregated_forecast_mae.png) | ![MAPE](plots/aggregated_forecast_mape.png) |
 
 ### Capacity Planning
 
@@ -86,9 +86,9 @@ Results from multi-seed experiments (n=5 seeds: 42, 123, 456, 789, 1024) showing
 | SARIMA | 2.72 ± 0.20 | 34.6% ± 3.2% |
 | LSTM | **1.94 ± 0.04** | **10.6% ± 0.3%** |
 
-| Mean Utilization | Max Utilization | Overload Rate |
-|:----------------:|:---------------:|:-------------:|
-| ![U_max Mean](plots/capacity_u_max_mean.png) | ![U_max Max](plots/capacity_u_max_max.png) | ![Overload](plots/capacity_f_over_mean.png) |
+| Max Utilization (mean ± std) | Overload Rate (mean ± std) |
+|:----------------------------:|:--------------------------:|
+| ![U_max](plots/aggregated_capacity_u_max.png) | ![Overload](plots/aggregated_capacity_f_over.png) |
 
 **Key Findings**:
 - LSTM achieves **35% lower RMSE** than SARIMA (16.5 vs 25.3)
@@ -98,7 +98,7 @@ Results from multi-seed experiments (n=5 seeds: 42, 123, 456, 789, 1024) showing
 
 ### Per-Link RMSE Distribution
 
-![RMSE Histogram](plots/rmse_histogram.png)
+![RMSE Histogram](plots/aggregated_rmse_histogram.png)
 
 ### Time Series Examples
 
