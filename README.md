@@ -1,6 +1,8 @@
-# Network Traffic Forecasting & Capacity Planning
+# Provision-Aware: Decision-Focused and Conformal Forecasting for Backbone Capacity Planning
 
-Compare SARIMA vs LSTM models for link load prediction in a synthetic backbone network, and evaluate how forecasting quality affects capacity planning decisions.
+Working repo for the *Provision-Aware* paper (CNSM 2026). Goal: show that asymmetric/quantile-loss forecasters wrapped in conformal prediction beat MSE-trained baselines on **operational cost** at equal RMSE on real backbone traces (Abilene, GÉANT, CESNET-TimeSeries24).
+
+The previous synthetic-only SARIMA-vs-LSTM comparison is preserved as an ablation only; see `plan.md` for the roadmap and `STEPS.md` for the working notebook.
 
 ## Overview
 
@@ -148,9 +150,59 @@ It includes:
 
 LaTeX source: [`report/paper.tex`](report/paper.tex)
 
+## Cloud sweep (paper-grade runs)
+
+The laptop runs setup + tests only; full sweeps live on a cloud box.
+
+```bash
+# 1. provision a Python 3.13 box, clone the repo, then:
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements-cloud.txt
+
+# 2. download datasets (one time per box):
+#    Abilene — 24 weekly files from UT Austin, ~170 MB total:
+mkdir -p data/raw/abilene && cd data/raw/abilene
+for w in $(seq -f "%02g" 1 24); do
+  curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/X${w}.gz"
+done
+curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/links"
+curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/demands"
+curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/A"
+curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/topo-2003-04-10.txt"
+curl -O "https://www.cs.utexas.edu/~yzhang/research/AbileneTM/readme.txt"
+cd -
+python -m src.data.abilene_loader
+
+#    GÉANT — preprocessed CSV (46 MB):
+mkdir -p data/raw/geant && cd data/raw/geant
+curl -L -O "https://raw.githubusercontent.com/duchuyle108/SDN-TMprediction/master/dataset/geant-flat-tms.csv"
+cd -
+python -m src.data.geant_loader
+
+#    CESNET-TimeSeries24 — Zenodo (CC-BY, several GB):
+mkdir -p data/raw/cesnet
+# fetch the 10-min institution-aggregation parquet bundle from
+#   https://zenodo.org/records/13382427  (DOI 10.5281/zenodo.13382427)
+# unpack so .parquet files land directly under data/raw/cesnet/.
+python -m src.data.cesnet_loader  # defaults to top-20 institutions.
+
+# 3. run the v0 gate (Abilene, 5 seeds, mse + asym + pinball):
+python scripts/run_v0.py --seeds 42 123 456 789 1024
+# pass criterion: see CLAUDE.md / plan.md.
+
+# 4. one-off cells (any dataset × loss):
+python scripts/run_experiments.py --dataset abilene --loss asym \
+    --alpha 5 --beta 1 --seeds 42 123 456 789 1024
+python scripts/run_experiments.py --dataset geant   --loss pinball \
+    --alpha 5 --beta 1 --seeds 42 123 456 789 1024
+```
+
+Per-cell artefacts land under `results/<dataset>_<loss>/seed_<N>/`; the aggregated JSON at `results/<dataset>_<loss>/aggregated_results.json` is what `run_v0.py --from-cache` reads back.
+
 ## Requirements
 
 - Python 3.9+
 - numpy, pandas, networkx
 - matplotlib, statsmodels
 - torch, scikit-learn, joblib
+- (cloud) pyarrow, mapie — see `requirements-cloud.txt` for pinned versions
