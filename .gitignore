@@ -28,6 +28,12 @@ ENV/
 # Data files (large, regenerable)
 data/*.npz
 data/*.pkl
+data/raw/
+
+# Local working notes (kept out of public history)
+CLAUDE.md
+STEPS.md
+plan.md
 
 # Model artifacts (large, regenerable)
 models/*.pt
