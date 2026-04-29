@@ -2,8 +2,8 @@
     "name": "ML Network Traffic Forecasting",
     "image": "mcr.microsoft.com/devcontainers/python:3.11",
     "hostRequirements": {
-        "cpus": 8,
-        "memory": "32gb"
+        "cpus": 4,
+        "memory": "16gb"
     },
     "postCreateCommand": "pip install --upgrade pip && pip install -r requirements-cloud.txt",
     "customizations": {
