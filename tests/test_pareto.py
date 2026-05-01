@@ -80,13 +80,26 @@ class TestParseRatio:
 class TestCellOutputDir:
     def test_layout(self, tmp_path):
         from scripts.run_pareto import cell_output_dir
+        # Default loss_form is "asym" (squared); new layout includes it
+        # so squared and L1 sweeps don't collide.
         d = cell_output_dir("abilene", "5:1", base_dir=str(tmp_path))
-        assert d == str(tmp_path / "abilene_pareto" / "ratio_5_1")
+        assert d == str(tmp_path / "abilene_pareto_asym" / "ratio_5_1")
 
     def test_fractional(self, tmp_path):
         from scripts.run_pareto import cell_output_dir
         d = cell_output_dir("abilene", "0.5:0.5", base_dir=str(tmp_path))
         assert d.endswith("ratio_0.5_0.5")
+
+    def test_loss_form_separates_paths(self, tmp_path):
+        """Squared and cusp-linear sweeps must NEVER share a cell dir."""
+        from scripts.run_pareto import cell_output_dir
+        d_asym = cell_output_dir("abilene", "5:1",
+                                 base_dir=str(tmp_path), loss_form="asym")
+        d_l1 = cell_output_dir("abilene", "5:1",
+                               base_dir=str(tmp_path), loss_form="asym_l1")
+        assert d_asym != d_l1
+        assert d_asym.endswith("abilene_pareto_asym/ratio_5_1")
+        assert d_l1.endswith("abilene_pareto_asym_l1/ratio_5_1")
 
 
 # ---------------------------------------------------------------------------
