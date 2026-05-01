@@ -40,10 +40,6 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 from src.config import PLOTS_DIR, RESULTS_DIR  # noqa: E402
-from src.evaluation.operational import (  # noqa: E402
-    asymmetric_op_cost,
-    capacity_from_predictions,
-)
 
 
 RATIO_DIR_RE = re.compile(r"^ratio_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)$")
@@ -109,18 +105,40 @@ def load_cell_predictions(cell_dir: str) -> list[tuple[np.ndarray, np.ndarray]]:
 
 
 def evaluate_cell(seeds: list[tuple[np.ndarray, np.ndarray]],
-                  operator_grid: list[tuple[float, float]],
-                  margin: float = 1.1) -> dict:
-    """For one cell, compute mean asym_op_cost across seeds at each operator α/β."""
+                  operator_grid: list[tuple[float, float]]) -> dict:
+    """For one cell, compute mean operator-cost across seeds at each operator α/β.
+
+    Operator cost is the *prediction-level* asymmetric squared loss:
+        cost(α, β) = α · Σ max(y − ŷ, 0)² + β · Σ max(ŷ − y, 0)²
+    summed over all (t, link) cells. This is exactly the loss the runner
+    minimises during training, just evaluated post-hoc with a fixed
+    operator (α, β) instead of the training (α, β).
+
+    We deliberately do NOT route through `capacity_from_predictions` +
+    `asymmetric_op_cost` here. That route compares y_true against the
+    model's own provisioned capacity (margin × max(pred)), which means
+    each model is judged against capacity *it itself chose*. An over-
+    predictor like asym 100:1 always has its own capacity above truth
+    everywhere → zero underloads, large headroom → cost ≈ β × headroom.
+    That number is operationally meaningless for cross-model comparison
+    because the capacity scheme leaks the predictor.
+
+    Direct prediction-level cost has no such leak: every model's
+    predictions are compared to the same y_true under the same operator
+    weights, and the question becomes "which forecaster's predictions
+    minimise the operator's actual cost surrogate?"
+    """
     if not seeds:
         return {f"{a}:{b}": None for a, b in operator_grid}
     out: dict[str, float] = {}
     for op_a, op_b in operator_grid:
         per_seed = []
         for preds, y_true in seeds:
-            cap = capacity_from_predictions(preds, margin=margin)
-            cost = asymmetric_op_cost(y_true, cap, alpha=op_a, beta=op_b)
-            per_seed.append(cost)
+            err = y_true - preds
+            under = np.clip(err, 0.0, None)   # y > ŷ (under-prediction)
+            over = np.clip(-err, 0.0, None)   # ŷ > y (over-prediction)
+            cost = op_a * (under ** 2).sum() + op_b * (over ** 2).sum()
+            per_seed.append(float(cost))
         out[f"{op_a:g}:{op_b:g}"] = float(np.mean(per_seed))
     return out
 
@@ -242,8 +260,6 @@ def main() -> None:
     parser.add_argument("--operator-ratios", nargs="+",
                         default=["1:1", "2:1", "5:1", "10:1", "20:1", "100:1"],
                         help="operator cost ratios to evaluate at")
-    parser.add_argument("--margin", type=float, default=1.1,
-                        help="safety margin for capacity provisioning (default 1.1)")
     parser.add_argument("--plot-path", default=None,
                         help="default: plots/operator_eval_<dataset>.png")
     parser.add_argument("--summary-path", default=None,
@@ -269,14 +285,13 @@ def main() -> None:
     for label, _, _, path in cells:
         seeds = load_cell_predictions(path)
         print(f"  [{label}] {len(seeds)} seeds with predictions")
-        matrix[label] = evaluate_cell(seeds, operator_grid, margin=args.margin)
+        matrix[label] = evaluate_cell(seeds, operator_grid)
         cell_labels.append(label)
 
     best = find_best_per_operator(matrix, cell_labels, operator_grid)
 
     summary = {
         "dataset": args.dataset,
-        "margin": args.margin,
         "operator_ratios": args.operator_ratios,
         "training_cells": cell_labels,
         "matrix": matrix,
