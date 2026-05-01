@@ -389,19 +389,25 @@ def plot_heatmap(matrix: dict,
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fixed-operator Pareto evaluator")
     parser.add_argument("--dataset", default="abilene")
+    parser.add_argument("--loss-form", default="asym",
+                        choices=("asym", "asym_l1"),
+                        help="which sweep root to read: 'asym' "
+                             "(results/<dataset>_pareto_asym/) or "
+                             "'asym_l1' (results/<dataset>_pareto_asym_l1/). "
+                             "Ignored if --pareto-base-dir is set.")
     parser.add_argument("--pareto-base-dir", default=None,
-                        help="default: results/<dataset>_pareto")
+                        help="default: results/<dataset>_pareto_<loss_form>")
     parser.add_argument("--operator-ratios", nargs="+",
                         default=["1:1", "2:1", "5:1", "10:1", "20:1", "100:1"],
                         help="operator cost ratios to evaluate at")
     parser.add_argument("--plot-path", default=None,
-                        help="default: plots/operator_eval_<dataset>.png")
+                        help="default: plots/operator_eval_<dataset>_<loss_form>.png")
     parser.add_argument("--summary-path", default=None,
-                        help="default: results/<dataset>_pareto/operator_eval.json")
+                        help="default: <pareto_base_dir>/operator_eval.json")
     args = parser.parse_args()
 
     pareto_dir = args.pareto_base_dir or os.path.join(
-        RESULTS_DIR, f"{args.dataset}_pareto"
+        RESULTS_DIR, f"{args.dataset}_pareto_{args.loss_form}"
     )
     operator_grid = [parse_ratio(r) for r in args.operator_ratios]
 
@@ -440,7 +446,7 @@ def main() -> None:
     print(f"[operator-eval] wrote {summary_path}")
 
     plot_path = args.plot_path or os.path.join(
-        PLOTS_DIR, f"operator_eval_{args.dataset}.png"
+        PLOTS_DIR, f"operator_eval_{args.dataset}_{args.loss_form}.png"
     )
     plot_heatmap(matrix, cell_labels, operator_grid, plot_path,
                  dataset=args.dataset)

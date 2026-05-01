@@ -57,19 +57,37 @@ def parse_ratio(s: str) -> tuple[float, float]:
     return a, b
 
 
+def _sweep_root(dataset: str, loss_form: str = "asym",
+                base_dir: str = RESULTS_DIR) -> str:
+    """Per-loss-form sweep root: results/<dataset>_pareto_<loss_form>/.
+
+    Different loss forms (squared 'asym' vs cusp-linear 'asym_l1') MUST
+    cache to different roots so concurrent / sequential sweeps don't
+    overwrite each other's per-cell artefacts. The MSE baseline cell
+    also lives under its sweep's root, so a "mse baseline trained
+    alongside an asym sweep" reads from the squared root and won't
+    collide with one trained alongside the asym_l1 sweep.
+    """
+    return os.path.join(base_dir, f"{dataset}_pareto_{loss_form}")
+
+
 def cell_output_dir(dataset: str, ratio_str: str,
-                    base_dir: str = RESULTS_DIR) -> str:
+                    base_dir: str = RESULTS_DIR,
+                    loss_form: str = "asym") -> str:
     a, b = parse_ratio(ratio_str)
     return os.path.join(
-        base_dir, f"{dataset}_pareto",
+        _sweep_root(dataset, loss_form, base_dir),
         f"ratio_{a:g}_{b:g}",
     )
 
 
 def _aggregated_path(dataset: str, ratio_str: str,
-                     base_dir: str = RESULTS_DIR) -> str:
-    return os.path.join(cell_output_dir(dataset, ratio_str, base_dir),
-                        "aggregated_results.json")
+                     base_dir: str = RESULTS_DIR,
+                     loss_form: str = "asym") -> str:
+    return os.path.join(
+        cell_output_dir(dataset, ratio_str, base_dir, loss_form),
+        "aggregated_results.json",
+    )
 
 
 def _load_or_run(dataset: str, ratio_str: str, seeds: list[int],
@@ -82,7 +100,7 @@ def _load_or_run(dataset: str, ratio_str: str, seeds: list[int],
     matches AsymmetricMSE) or 'asym_l1' (cusp-linear, Eramo-style L1).
     Cells from different loss forms cache to different output dirs.
     """
-    cache = _aggregated_path(dataset, ratio_str, base_dir)
+    cache = _aggregated_path(dataset, ratio_str, base_dir, loss_form)
     if from_cache:
         if not os.path.exists(cache):
             raise FileNotFoundError(
@@ -98,20 +116,28 @@ def _load_or_run(dataset: str, ratio_str: str, seeds: list[int],
         alpha=a, beta=b, tau=None,
         seeds=seeds,
         models=models,
-        output_dir=cell_output_dir(dataset, ratio_str, base_dir),
+        output_dir=cell_output_dir(dataset, ratio_str, base_dir, loss_form),
     )
 
 
 def _load_or_run_mse_baseline(dataset: str, seeds: list[int],
                               models: tuple, from_cache: bool,
-                              base_dir: str = RESULTS_DIR) -> dict:
+                              base_dir: str = RESULTS_DIR,
+                              loss_form: str = "asym") -> dict:
     """Run or load the MSE-baseline cell.
 
     Used as a reference X marker on the Pareto plot so reviewers can see
     the asymmetric-loss frontier dominating the MSE point. Cached at
-    results/<dataset>_pareto/baseline_mse/aggregated_results.json.
+    results/<dataset>_pareto_<loss_form>/baseline_mse/aggregated_results.json.
+
+    The MSE baseline lives under the *sweep's* root (not a shared root)
+    so its per-seed predictions can't be overwritten by a concurrent
+    sweep with a different loss form. Re-trains MSE once per sweep,
+    which is wasteful (~22 min) but eliminates the cross-sweep
+    contamination class of bug.
     """
-    out_dir = os.path.join(base_dir, f"{dataset}_pareto", "baseline_mse")
+    out_dir = os.path.join(_sweep_root(dataset, loss_form, base_dir),
+                           "baseline_mse")
     cache = os.path.join(out_dir, "aggregated_results.json")
     if from_cache:
         if not os.path.exists(cache):
@@ -390,10 +416,11 @@ def main() -> None:
     mse_baseline = None
     if args.include_mse_baseline:
         print(f"[pareto] dataset={args.dataset}  loss=mse (baseline)  "
-              f"from_cache={args.from_cache}")
+              f"from_cache={args.from_cache}  loss_form={args.loss_form}")
         mse_baseline = _load_or_run_mse_baseline(
             args.dataset, args.seeds,
             tuple(args.models), args.from_cache,
+            loss_form=args.loss_form,
         )
 
     points = collect_points(by_ratio)
@@ -413,7 +440,7 @@ def main() -> None:
                 mse_baseline=mse_baseline)
 
     summary_path = os.path.join(
-        RESULTS_DIR, f"{args.dataset}_pareto", "summary.json"
+        _sweep_root(args.dataset, args.loss_form), "summary.json"
     )
     write_summary(by_ratio, points, summary_path,
                   mse_baseline=mse_baseline)
