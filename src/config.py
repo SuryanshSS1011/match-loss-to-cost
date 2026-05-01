@@ -63,6 +63,11 @@ CONFIG = {
     # If set, fit SARIMA on a random subset of N links (deterministic via random_seed).
     # Local presence-check default: 8. Cloud full-fidelity: None (= all links).
     'sarima_link_subset': 8,
+    # joblib n_jobs for parallel SARIMA fits. -1 = all CPUs (default, fine on
+    # cloud boxes with 32+ GB RAM). Cap to 2 on memory-constrained machines
+    # (Codespaces 4c/16GB) where statsmodels can OOM with 4 workers.
+    # Override via env var SARIMA_N_JOBS at process start.
+    'sarima_n_jobs': int(os.environ.get('SARIMA_N_JOBS', -1)),
 
     # LSTM parameters
     'lstm_hidden_size': 64,

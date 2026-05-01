@@ -215,9 +215,10 @@ def main():
     L_train_sub = L_train_val[:, fit_links]
     L_test_sub = L_test[:, fit_links]
 
+    n_jobs = CONFIG.get('sarima_n_jobs', -1)
     if mode == 'rolling':
         sub_preds = fit_sarima_rolling_all_links(
-            L_train_sub, L_test_sub, order=order, seasonal_order=seasonal_order, n_jobs=-1
+            L_train_sub, L_test_sub, order=order, seasonal_order=seasonal_order, n_jobs=n_jobs
         )
     elif mode == 'oneshot':
         sub_preds = fit_sarima_all_links(
@@ -225,7 +226,7 @@ def main():
             forecast_steps=len(L_test),
             order=order,
             seasonal_order=seasonal_order,
-            n_jobs=-1,
+            n_jobs=n_jobs,
         )
     else:
         raise ValueError(f"unknown sarima_mode {mode!r}")
