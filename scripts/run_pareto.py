@@ -74,7 +74,14 @@ def _aggregated_path(dataset: str, ratio_str: str,
 
 def _load_or_run(dataset: str, ratio_str: str, seeds: list[int],
                  models: tuple, from_cache: bool,
-                 base_dir: str = RESULTS_DIR) -> dict:
+                 base_dir: str = RESULTS_DIR,
+                 loss_form: str = "asym") -> dict:
+    """Run or load one ratio cell.
+
+    `loss_form` selects the asymmetric variant: 'asym' (squared, default,
+    matches AsymmetricMSE) or 'asym_l1' (cusp-linear, Eramo-style L1).
+    Cells from different loss forms cache to different output dirs.
+    """
     cache = _aggregated_path(dataset, ratio_str, base_dir)
     if from_cache:
         if not os.path.exists(cache):
@@ -87,11 +94,40 @@ def _load_or_run(dataset: str, ratio_str: str, seeds: list[int],
     a, b = parse_ratio(ratio_str)
     from scripts import run_experiments
     return run_experiments.main_programmatic(
-        dataset=dataset, loss="asym",
+        dataset=dataset, loss=loss_form,
         alpha=a, beta=b, tau=None,
         seeds=seeds,
         models=models,
         output_dir=cell_output_dir(dataset, ratio_str, base_dir),
+    )
+
+
+def _load_or_run_mse_baseline(dataset: str, seeds: list[int],
+                              models: tuple, from_cache: bool,
+                              base_dir: str = RESULTS_DIR) -> dict:
+    """Run or load the MSE-baseline cell.
+
+    Used as a reference X marker on the Pareto plot so reviewers can see
+    the asymmetric-loss frontier dominating the MSE point. Cached at
+    results/<dataset>_pareto/baseline_mse/aggregated_results.json.
+    """
+    out_dir = os.path.join(base_dir, f"{dataset}_pareto", "baseline_mse")
+    cache = os.path.join(out_dir, "aggregated_results.json")
+    if from_cache:
+        if not os.path.exists(cache):
+            raise FileNotFoundError(
+                f"--from-cache: missing MSE baseline at {cache}; "
+                f"run without --from-cache once to populate it"
+            )
+        with open(cache) as f:
+            return json.load(f)
+    from scripts import run_experiments
+    return run_experiments.main_programmatic(
+        dataset=dataset, loss="mse",
+        alpha=1.0, beta=1.0, tau=None,
+        seeds=seeds,
+        models=models,
+        output_dir=out_dir,
     )
 
 
@@ -168,13 +204,18 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
                 dataset: str = "",
                 significance: Optional[dict[str, dict[str, Optional[bool]]]]
                 = None,
-                wilcoxon_reference: Optional[str] = None) -> None:
+                wilcoxon_reference: Optional[str] = None,
+                mse_baseline: Optional[dict] = None) -> None:
     """One line per model on (over-prov cost, overload rate) plane.
 
     If `significance` is given, points where the model strictly beats the
     `wilcoxon_reference` on overload_rate (Holm-corrected) get a black
     edge ring; non-significant or reference points stay unringed. The
     legend gains a one-line annotation explaining the convention.
+
+    If `mse_baseline` is a runner aggregated dict, each model's MSE-trained
+    point is overlaid as a large black X-marker so the reader can see the
+    asym frontier dominating the MSE point.
     """
     import matplotlib
     matplotlib.use("Agg")
@@ -220,6 +261,21 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
             plt.annotate(f"  {e['ratio']}", (x, y),
                          fontsize=7, alpha=0.6)
 
+    # Overlay MSE-baseline points as large black X markers per model.
+    if mse_baseline is not None:
+        for model, block in mse_baseline.get("models", {}).items():
+            if model.endswith("_CQR") or model.endswith("_ACI"):
+                continue
+            op = block.get("operational", {})
+            x = op.get("over_provisioning_cost", {}).get("mean")
+            y = op.get("overload_rate", {}).get("mean")
+            if x is None or y is None:
+                continue
+            color = palette.get(model, None)
+            plt.scatter([x], [y], marker="x", s=120, c="black",
+                        linewidth=2.0, zorder=5,
+                        label=f"{model} (MSE)" if color is None else None)
+
     plt.xlabel("Mean over-provisioning cost")
     plt.ylabel("Mean overload rate")
     title = "Pareto frontier: over-provisioning vs overload"
@@ -232,6 +288,12 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
     handles, labels = plt.gca().get_legend_handles_labels()
     if handles:
         plt.legend(fontsize=9, loc="best")
+    if mse_baseline is not None:
+        plt.figtext(
+            0.01, 0.01,
+            "Black X = MSE-trained baseline (one per model)",
+            ha="left", va="bottom", fontsize=7, alpha=0.7,
+        )
     if significance is not None and wilcoxon_reference is not None:
         plt.figtext(
             0.99, 0.01,
@@ -246,12 +308,31 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
 
 
 def write_summary(by_ratio: dict[str, dict], points: dict[str, list[dict]],
-                  out_path: str) -> None:
+                  out_path: str,
+                  mse_baseline: Optional[dict] = None) -> None:
     out = {
         "ratios": list(by_ratio.keys()),
         "models": list(points.keys()),
         "per_model": points,
     }
+    if mse_baseline is not None:
+        # Just the per-model headline operational means; the full per-seed
+        # values live in the MSE-baseline cell's aggregated_results.json.
+        baseline_pts = {}
+        for model, block in mse_baseline.get("models", {}).items():
+            op = block.get("operational", {})
+            forecast = block.get("forecast", {})
+            baseline_pts[model] = {
+                "overload_rate": op.get("overload_rate", {}).get("mean"),
+                "over_provisioning_cost": op.get(
+                    "over_provisioning_cost", {}
+                ).get("mean"),
+                "asymmetric_op_cost": op.get(
+                    "asymmetric_op_cost", {}
+                ).get("mean"),
+                "rmse_mean": forecast.get("rmse_mean", {}).get("mean"),
+            }
+        out["mse_baseline"] = baseline_pts
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(out, f, indent=2)
@@ -278,6 +359,17 @@ def main() -> None:
                         help="display name of the reference model "
                              "for the per-point Wilcoxon overlay "
                              "(e.g. 'LSTM'). Skipped if absent.")
+    parser.add_argument("--loss-form", default="asym",
+                        choices=("asym", "asym_l1"),
+                        help="asymmetric loss variant for the sweep: "
+                             "'asym' = squared (default, AsymmetricMSE), "
+                             "'asym_l1' = cusp-linear (Eramo-style L1, "
+                             "less knob-sensitive at extreme α/β)")
+    parser.add_argument("--include-mse-baseline", action="store_true",
+                        help="train a separate MSE-loss cell and emit it as "
+                             "an X-marker reference point on the Pareto "
+                             "plot. Lets reviewers see the asym frontier "
+                             "dominating MSE in (overload, over-prov) space.")
     args = parser.parse_args()
 
     # Validate ratio strings up front so we fail fast.
@@ -287,9 +379,20 @@ def main() -> None:
     by_ratio: dict[str, dict] = {}
     for r in args.ratios:
         print(f"[pareto] dataset={args.dataset}  ratio={r}  "
+              f"loss_form={args.loss_form}  "
               f"from_cache={args.from_cache}")
         by_ratio[r] = _load_or_run(
             args.dataset, r, args.seeds,
+            tuple(args.models), args.from_cache,
+            loss_form=args.loss_form,
+        )
+
+    mse_baseline = None
+    if args.include_mse_baseline:
+        print(f"[pareto] dataset={args.dataset}  loss=mse (baseline)  "
+              f"from_cache={args.from_cache}")
+        mse_baseline = _load_or_run_mse_baseline(
+            args.dataset, args.seeds,
             tuple(args.models), args.from_cache,
         )
 
@@ -306,12 +409,14 @@ def main() -> None:
     )
     plot_pareto(points, plot_path, dataset=args.dataset,
                 significance=significance,
-                wilcoxon_reference=args.wilcoxon_vs)
+                wilcoxon_reference=args.wilcoxon_vs,
+                mse_baseline=mse_baseline)
 
     summary_path = os.path.join(
         RESULTS_DIR, f"{args.dataset}_pareto", "summary.json"
     )
-    write_summary(by_ratio, points, summary_path)
+    write_summary(by_ratio, points, summary_path,
+                  mse_baseline=mse_baseline)
 
 
 if __name__ == "__main__":

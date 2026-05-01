@@ -11,12 +11,15 @@ Conventions:
 """
 
 from .asymmetric import asymmetric_mse, AsymmetricMSE
+from .cusp_linear import cusp_linear, CuspLinear
 from .pinball import pinball, PinballLoss
 from .factory import make_loss
 
 __all__ = [
     "asymmetric_mse",
     "AsymmetricMSE",
+    "cusp_linear",
+    "CuspLinear",
     "pinball",
     "PinballLoss",
     "make_loss",

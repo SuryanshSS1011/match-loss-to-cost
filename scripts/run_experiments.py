@@ -643,7 +643,7 @@ def main() -> dict:
     parser.add_argument("--dataset", default=CONFIG.get("dataset", "abilene"),
                         choices=("synthetic", "abilene", "geant", "cesnet"))
     parser.add_argument("--loss", default=CONFIG.get("lstm_loss", "mse"),
-                        choices=("mse", "asym", "pinball"))
+                        choices=("mse", "asym", "asym_l1", "pinball"))
     parser.add_argument("--alpha", type=float,
                         default=CONFIG.get("loss_alpha", 5.0))
     parser.add_argument("--beta", type=float,
