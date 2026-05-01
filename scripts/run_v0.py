@@ -47,7 +47,8 @@ def _aggregated_path(dataset: str, loss: str) -> str:
 
 def _load_or_run(loss: str, seeds: list[int],
                  alpha: float, beta: float, tau: Optional[float],
-                 from_cache: bool) -> dict:
+                 from_cache: bool,
+                 models: Optional[tuple] = None) -> dict:
     cache = _aggregated_path(V0_DATASET, loss)
     if from_cache:
         if not os.path.exists(cache):
@@ -59,12 +60,15 @@ def _load_or_run(loss: str, seeds: list[int],
 
     # Defer runner import until needed; importing it triggers heavy modules.
     from scripts import run_experiments
-    return run_experiments.main_programmatic(
+    kwargs = dict(
         dataset=V0_DATASET, loss=loss,
         alpha=alpha, beta=beta, tau=tau,
         seeds=seeds,
         output_dir=os.path.join(RESULTS_DIR, f"{V0_DATASET}_{loss}"),
     )
+    if models is not None:
+        kwargs["models"] = models
+    return run_experiments.main_programmatic(**kwargs)
 
 
 def _extract_points(agg: dict, model: str) -> tuple[list[float], list[float]]:
@@ -168,15 +172,21 @@ def main() -> None:
                         help="skip training; read aggregated JSONs only")
     parser.add_argument("--plot-path", default=None,
                         help="default: plots/v0_rmse_vs_opcost.png")
+    parser.add_argument("--skip-sarima", action="store_true",
+                        help="skip SARIMA, run LSTM only (memory-constrained envs)")
     args = parser.parse_args()
+
+    models = ("lstm",) if args.skip_sarima else None
 
     by_loss = {}
     for loss in V0_LOSSES:
-        print(f"[v0] loss={loss}  from_cache={args.from_cache}")
+        print(f"[v0] loss={loss}  from_cache={args.from_cache}  "
+              f"models={'lstm only' if args.skip_sarima else 'lstm+sarima'}")
         by_loss[loss] = _load_or_run(
             loss, args.seeds,
             alpha=args.alpha, beta=args.beta, tau=args.tau,
             from_cache=args.from_cache,
+            models=models,
         )
 
     plot_path = args.plot_path or os.path.join(PLOTS_DIR, "v0_rmse_vs_opcost.png")
