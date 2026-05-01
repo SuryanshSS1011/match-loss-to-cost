@@ -106,7 +106,7 @@ def load_cell_predictions(cell_dir: str) -> list[tuple[np.ndarray, np.ndarray]]:
 
 def evaluate_cell(seeds: list[tuple[np.ndarray, np.ndarray]],
                   operator_grid: list[tuple[float, float]]) -> dict:
-    """For one cell, compute mean operator-cost across seeds at each operator α/β.
+    """For one cell, compute per-seed and mean operator-cost at each operator α/β.
 
     Operator cost is the *prediction-level* asymmetric squared loss:
         cost(α, β) = α · Σ max(y − ŷ, 0)² + β · Σ max(ŷ − y, 0)²
@@ -127,87 +127,207 @@ def evaluate_cell(seeds: list[tuple[np.ndarray, np.ndarray]],
     predictions are compared to the same y_true under the same operator
     weights, and the question becomes "which forecaster's predictions
     minimise the operator's actual cost surrogate?"
+
+    Returns: {operator_key: {"mean": float, "values": [per-seed costs in input order]}}
+             or {operator_key: None} for cells with no usable seeds.
     """
     if not seeds:
         return {f"{a}:{b}": None for a, b in operator_grid}
-    out: dict[str, float] = {}
+    out: dict = {}
     for op_a, op_b in operator_grid:
-        per_seed = []
+        per_seed: list[float] = []
         for preds, y_true in seeds:
             err = y_true - preds
             under = np.clip(err, 0.0, None)   # y > ŷ (under-prediction)
             over = np.clip(-err, 0.0, None)   # ŷ > y (over-prediction)
             cost = op_a * (under ** 2).sum() + op_b * (over ** 2).sum()
             per_seed.append(float(cost))
-        out[f"{op_a:g}:{op_b:g}"] = float(np.mean(per_seed))
+        out[f"{op_a:g}:{op_b:g}"] = {
+            "mean": float(np.mean(per_seed)),
+            "values": per_seed,
+        }
     return out
 
 
-def find_best_per_operator(matrix: dict[str, dict[str, Optional[float]]],
+def _bootstrap_ci_winpct(cell_values: list[float],
+                         mse_values: list[float],
+                         n_boot: int = 2000,
+                         alpha: float = 0.05,
+                         rng: Optional[np.random.Generator] = None
+                         ) -> tuple[float, float, float]:
+    """Bootstrap 95% CI on win% = 100 * (mse_mean - cell_mean) / mse_mean.
+
+    Paired bootstrap: at each of `n_boot` iterations, resample seed
+    *indices* with replacement, then recompute the win% on (cell, mse)
+    pairs at those indices. Returns (point, lo, hi) — the point estimate
+    is from the original (non-resampled) means, and (lo, hi) is the
+    central (1−α) interval over the bootstrap distribution.
+
+    Pairing matters: even though seed routing diverged between MSE and
+    asym cells (different model checkpoints), seed *index* still
+    correlates the data realisation each model was evaluated on (same
+    test set). The paired bootstrap respects that correlation; the
+    independent-samples form would over-estimate the variance.
+
+    Returns (None, None, None) if either series has < 2 valid points.
+    """
+    if rng is None:
+        rng = np.random.default_rng(0)
+    cv = np.asarray(cell_values, dtype=np.float64)
+    mv = np.asarray(mse_values, dtype=np.float64)
+    n = min(len(cv), len(mv))
+    if n < 2:
+        return (float("nan"), float("nan"), float("nan"))
+    cv, mv = cv[:n], mv[:n]
+    point = 100.0 * (mv.mean() - cv.mean()) / mv.mean() if mv.mean() != 0 else 0.0
+    boots = np.empty(n_boot, dtype=np.float64)
+    for k in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        cv_b = cv[idx].mean()
+        mv_b = mv[idx].mean()
+        boots[k] = (
+            100.0 * (mv_b - cv_b) / mv_b if mv_b != 0 else 0.0
+        )
+    lo = float(np.quantile(boots, alpha / 2.0))
+    hi = float(np.quantile(boots, 1.0 - alpha / 2.0))
+    return (float(point), lo, hi)
+
+
+def _cell_mean(matrix: dict, cell: str, op_key: str) -> Optional[float]:
+    block = matrix.get(cell, {}).get(op_key)
+    if block is None:
+        return None
+    return block.get("mean")
+
+
+def _cell_values(matrix: dict, cell: str, op_key: str) -> Optional[list[float]]:
+    block = matrix.get(cell, {}).get(op_key)
+    if block is None:
+        return None
+    return block.get("values")
+
+
+def find_best_per_operator(matrix: dict,
                            cell_labels: list[str],
-                           operator_grid: list[tuple[float, float]]
+                           operator_grid: list[tuple[float, float]],
+                           n_boot: int = 2000,
                            ) -> dict[str, dict]:
     """For each operator α/β, find the training cell with the lowest cost.
 
-    Returns: {operator_str: {best_cell, best_cost, mse_cost, win_pct}}.
-    `win_pct` is the % improvement of best over MSE. Negative if MSE wins.
-    `mse_cost` is None if no MSE baseline cell is present.
+    Returns: {operator_str: {
+        best_cell, best_cost, mse_cost,
+        win_pct_vs_mse, win_pct_lo, win_pct_hi, significant
+    }}.
+    `win_pct_lo`/`win_pct_hi` is the central 95% paired-bootstrap CI on
+    the win % over MSE; `significant` is True iff that CI excludes zero.
     """
+    rng = np.random.default_rng(0)
     out: dict[str, dict] = {}
     for op_a, op_b in operator_grid:
         op_key = f"{op_a:g}:{op_b:g}"
         best_cell, best_cost = None, float("inf")
-        mse_cost = None
         for cell in cell_labels:
-            cost = matrix.get(cell, {}).get(op_key)
+            cost = _cell_mean(matrix, cell, op_key)
             if cost is None:
                 continue
-            if cell == "MSE":
-                mse_cost = cost
             if cost < best_cost:
                 best_cost, best_cell = cost, cell
-        win_pct = None
-        if mse_cost is not None and best_cost != float("inf"):
-            win_pct = 100.0 * (mse_cost - best_cost) / mse_cost
+
+        mse_cost = _cell_mean(matrix, "MSE", op_key)
+        win_pct, lo, hi, sig = None, None, None, None
+        if (mse_cost is not None and best_cell is not None
+                and best_cell != "MSE"):
+            best_vals = _cell_values(matrix, best_cell, op_key) or []
+            mse_vals = _cell_values(matrix, "MSE", op_key) or []
+            point, lo_b, hi_b = _bootstrap_ci_winpct(
+                best_vals, mse_vals, n_boot=n_boot, alpha=0.05, rng=rng,
+            )
+            win_pct = point
+            if not (np.isnan(lo_b) or np.isnan(hi_b)):
+                lo, hi = lo_b, hi_b
+                sig = bool(lo > 0 or hi < 0)  # CI excludes 0 ⇒ real win/loss
+        elif mse_cost is not None and best_cell == "MSE":
+            win_pct, lo, hi, sig = 0.0, 0.0, 0.0, False
+
         out[op_key] = {
             "best_cell": best_cell,
             "best_cost": (best_cost if best_cost != float("inf") else None),
             "mse_cost": mse_cost,
             "win_pct_vs_mse": win_pct,
+            "win_pct_lo": lo,
+            "win_pct_hi": hi,
+            "significant": sig,
         }
     return out
 
 
-def plot_heatmap(matrix: dict[str, dict[str, Optional[float]]],
+def _significance_grid(matrix: dict, cell_labels: list[str],
+                       op_keys: list[str], n_boot: int = 2000,
+                       ) -> np.ndarray:
+    """For each (cell, operator) pair, paired-bootstrap CI on win% vs MSE.
+
+    Returns a (n_cells, n_ops) bool array where True means the 95% CI on
+    win% (vs MSE at the same operator) strictly excludes zero — i.e. the
+    cell is significantly different from MSE on that operator's cost.
+    The MSE row itself is always False (by construction it's zero).
+    """
+    rng = np.random.default_rng(0)
+    n_rows, n_cols = len(cell_labels), len(op_keys)
+    sig = np.zeros((n_rows, n_cols), dtype=bool)
+    if "MSE" not in cell_labels:
+        return sig
+    for j, op in enumerate(op_keys):
+        mse_vals = _cell_values(matrix, "MSE", op) or []
+        if len(mse_vals) < 2:
+            continue
+        for i, cell in enumerate(cell_labels):
+            if cell == "MSE":
+                continue
+            cell_vals = _cell_values(matrix, cell, op) or []
+            if len(cell_vals) < 2:
+                continue
+            _, lo, hi = _bootstrap_ci_winpct(
+                cell_vals, mse_vals, n_boot=n_boot, alpha=0.05, rng=rng,
+            )
+            if not (np.isnan(lo) or np.isnan(hi)):
+                sig[i, j] = bool(lo > 0 or hi < 0)
+    return sig
+
+
+def plot_heatmap(matrix: dict,
                  cell_labels: list[str],
                  operator_grid: list[tuple[float, float]],
-                 save_path: str, dataset: str = "") -> None:
+                 save_path: str, dataset: str = "",
+                 n_boot: int = 2000) -> None:
     """Heatmap: rows = training cells, cols = operator α/β.
 
     Cell color = (cost - MSE_cost_at_this_operator) / MSE_cost. Negative
     (= asym beats MSE) is green; positive (= MSE wins) is red. The MSE
     row is exactly zero by construction. Best training cell per column
-    gets a black-outline marker.
+    gets a black-outline marker. Cells where the paired-bootstrap 95% CI
+    on win% straddles zero (statistically indistinguishable from MSE)
+    get a hatched overlay so reviewers see which numbers are real wins
+    vs seed noise.
     """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
 
     op_keys = [f"{a:g}:{b:g}" for a, b in operator_grid]
     n_rows = len(cell_labels)
     n_cols = len(op_keys)
 
     grid = np.full((n_rows, n_cols), np.nan)
-    mse_idx = cell_labels.index("MSE") if "MSE" in cell_labels else None
     for i, cell in enumerate(cell_labels):
         for j, op in enumerate(op_keys):
-            val = matrix.get(cell, {}).get(op)
-            if val is None or mse_idx is None:
-                continue
-            mse_val = matrix.get("MSE", {}).get(op)
-            if mse_val is None or mse_val == 0:
+            val = _cell_mean(matrix, cell, op)
+            mse_val = _cell_mean(matrix, "MSE", op)
+            if val is None or mse_val is None or mse_val == 0:
                 continue
             grid[i, j] = (val - mse_val) / mse_val
+
+    sig = _significance_grid(matrix, cell_labels, op_keys, n_boot=n_boot)
 
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
     fig, ax = plt.subplots(figsize=(max(7, 1.2 * n_cols), max(5, 0.6 * n_rows)))
@@ -225,7 +345,7 @@ def plot_heatmap(matrix: dict[str, dict[str, Optional[float]]],
         title += f" — {dataset}"
     ax.set_title(title)
 
-    # Annotate each cell with the percent.
+    # Annotate each cell with the percent (and hatched if non-significant).
     for i in range(n_rows):
         for j in range(n_cols):
             v = grid[i, j]
@@ -234,6 +354,14 @@ def plot_heatmap(matrix: dict[str, dict[str, Optional[float]]],
             ax.text(j, i, f"{100*v:+.1f}%", ha="center", va="center",
                     fontsize=8,
                     color=("white" if abs(v) > 0.5 * vmax else "black"))
+            # MSE row is always exactly zero; never hatch.
+            if cell_labels[i] != "MSE" and not sig[i, j]:
+                ax.add_patch(Rectangle(
+                    (j - 0.5, i - 0.5), 1, 1,
+                    fill=False, edgecolor="white",
+                    hatch="///", linewidth=0.0,
+                    alpha=0.6, zorder=2,
+                ))
 
     # Mark best training cell per operator column with a black outline.
     for j in range(n_cols):
@@ -242,10 +370,16 @@ def plot_heatmap(matrix: dict[str, dict[str, Optional[float]]],
             continue
         best_i = int(np.nanargmin(col))
         rect = plt.Rectangle((j - 0.5, best_i - 0.5), 1, 1,
-                             fill=False, edgecolor="black", linewidth=2.5)
+                             fill=False, edgecolor="black", linewidth=2.5,
+                             zorder=3)
         ax.add_patch(rect)
 
     plt.colorbar(im, ax=ax, label="(cost - MSE_cost) / MSE_cost")
+    plt.figtext(
+        0.01, 0.01,
+        "Hatched = 95% bootstrap CI on win% includes 0 (not significant)",
+        ha="left", va="bottom", fontsize=7, alpha=0.7,
+    )
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
@@ -314,11 +448,20 @@ def main() -> None:
     # Print a one-screen verdict.
     print("\n[operator-eval] verdict:")
     print(f"{'operator α:β':>14s}  {'best training':>20s}  "
-          f"{'win % vs MSE':>14s}")
+          f"{'win % vs MSE':>14s}  {'95% CI':>22s}  {'sig?':>5s}")
     for op_key, info in best.items():
         win = info.get("win_pct_vs_mse")
+        lo = info.get("win_pct_lo")
+        hi = info.get("win_pct_hi")
+        sig = info.get("significant")
         win_str = f"{win:+.2f}%" if win is not None else "  N/A "
-        print(f"{op_key:>14s}  {str(info['best_cell']):>20s}  {win_str:>14s}")
+        if lo is not None and hi is not None:
+            ci_str = f"[{lo:+.1f}%, {hi:+.1f}%]"
+        else:
+            ci_str = "      N/A      "
+        sig_str = ("yes" if sig else "no") if sig is not None else "n/a"
+        print(f"{op_key:>14s}  {str(info['best_cell']):>20s}  "
+              f"{win_str:>14s}  {ci_str:>22s}  {sig_str:>5s}")
 
 
 if __name__ == "__main__":
