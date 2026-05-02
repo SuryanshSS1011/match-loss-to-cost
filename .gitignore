@@ -29,6 +29,7 @@ ENV/
 data/*.npz
 data/*.pkl
 data/raw/
+**/seed_*/*.npz
 
 # Local working notes (kept out of public history)
 CLAUDE.md
