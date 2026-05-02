@@ -36,6 +36,9 @@ CLAUDE.md
 STEPS.md
 plan.md
 
+# Paper-prep docs (drafted for our own writing, not for the public repo)
+docs/paper/
+
 # Model artifacts (large, regenerable)
 models/*.pt
 models/*.pth
