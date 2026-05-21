@@ -130,17 +130,37 @@ def _shortest_path_routing(num_nodes: int,
 def _load_csv(csv_path: str) -> np.ndarray:
     """Load the duchuyle108 GÉANT CSV → (T, NUM_OD) float32, units = Mbps.
 
-    The CSV is comma-separated, one row per snapshot, NUM_OD=529 columns
-    flattened in row-major (s, d) order. Units are kbps in the upstream
-    repo; we convert to Mbps for consistency with the Abilene loader.
+    The CSV is comma-separated, one row per snapshot, with NUM_OD=529 traffic
+    columns flattened in row-major (s, d) order. The published file ships with
+    a leading timestamp column (e.g. ``2005-01-01-00-30``), so the raw width is
+    NUM_OD+1; we detect and drop a non-numeric first column. Units are kbps in
+    the upstream repo; we convert to Mbps for consistency with Abilene.
     """
     if not os.path.exists(csv_path):
         raise FileNotFoundError(csv_path)
-    arr = np.loadtxt(csv_path, delimiter=",", dtype=np.float32)
-    if arr.ndim != 2 or arr.shape[1] != NUM_OD:
+    # Read as strings first so a leading timestamp column doesn't break parsing.
+    raw = np.loadtxt(csv_path, delimiter=",", dtype=str)
+    if raw.ndim != 2:
+        raise ValueError(f"{csv_path}: parsed shape {raw.shape}, expected 2-D")
+
+    n_cols = raw.shape[1]
+    if n_cols == NUM_OD:
+        data_cols = raw                       # already pure-numeric, NUM_OD wide
+    elif n_cols == NUM_OD + 1:
+        data_cols = raw[:, 1:]                # drop the leading timestamp column
+    else:
         raise ValueError(
-            f"{csv_path}: shape {arr.shape}, expected (T, {NUM_OD})"
+            f"{csv_path}: {n_cols} columns, expected {NUM_OD} or {NUM_OD + 1} "
+            f"(NUM_OD, optionally +1 for a timestamp column)"
         )
+
+    try:
+        arr = data_cols.astype(np.float32)
+    except ValueError as e:
+        raise ValueError(
+            f"{csv_path}: non-numeric traffic cell after dropping timestamp "
+            f"column — first data cell is {data_cols[0, 0]!r}"
+        ) from e
     # kbps → Mbps.
     return (arr / 1000.0).astype(np.float32)
 
