@@ -49,42 +49,68 @@ DEFAULT_METRIC = "n_bytes"
 BYTES_TO_MBPS = 8.0 / (600.0 * 1e6)
 
 
-def _list_institution_parquets(raw_dir: str) -> list[str]:
-    """Return sorted list of per-institution parquet paths under raw_dir.
+def _natural_key(path: str):
+    """Sort key so institution files order 0,1,2,...,10 not 0,1,10,2."""
+    base = os.path.splitext(os.path.basename(path))[0]
+    return (int(base), base) if base.isdigit() else (1 << 62, base)
 
-    The Zenodo release ships parquets at
-    `agg_10_minutes/institution_subnets/<institution_id>.parquet`
-    or similar. We accept either flat layout (all parquets in raw_dir) or
-    one level of nesting.
+
+def _list_institution_files(raw_dir: str) -> list[str]:
+    """Return sorted per-institution data files (CSV or parquet) under raw_dir.
+
+    The published Zenodo release (`institutions.tar.gz`) ships **CSV** files at
+    `institutions/agg_10_minutes/<institution_id>.csv` (one column per metric,
+    `id_time` first). Some mirrors repackage these as parquet. We accept either
+    extension and either a flat layout (files directly in raw_dir) or one level
+    of nesting (e.g. an `agg_10_minutes/` subdir), preferring the 10-minute
+    aggregation when multiple are present.
     """
-    direct = sorted(glob.glob(os.path.join(raw_dir, "*.parquet")))
-    if direct:
-        return direct
-    nested = sorted(glob.glob(os.path.join(raw_dir, "*", "*.parquet")))
-    if nested:
-        return nested
+    # Prefer the 10-minute aggregation subdir if the extracted tree is present.
+    for sub in ("agg_10_minutes", os.path.join("institutions", "agg_10_minutes")):
+        for ext in ("csv", "parquet"):
+            hit = sorted(
+                glob.glob(os.path.join(raw_dir, sub, f"*.{ext}")), key=_natural_key
+            )
+            if hit:
+                return hit
+    # Flat, then one-level-nested, for either extension.
+    for pattern in ("*.{ext}", os.path.join("*", "*.{ext}")):
+        for ext in ("csv", "parquet"):
+            hit = sorted(
+                glob.glob(os.path.join(raw_dir, pattern.format(ext=ext))),
+                key=_natural_key,
+            )
+            if hit:
+                return hit
     raise FileNotFoundError(
-        f"no .parquet files found under {raw_dir} (or one level deeper)"
+        f"no .csv or .parquet institution files found under {raw_dir} "
+        f"(checked agg_10_minutes/, flat, and one level deeper)"
     )
 
 
-def _read_one_parquet(path: str, metric: str) -> np.ndarray:
-    """Read one institution parquet, return the metric column as float32.
+def _read_one_institution(path: str, metric: str) -> np.ndarray:
+    """Read one institution file (CSV or parquet); return metric col as float32.
 
-    We pull only the metric column to keep memory low; the parquet rows
-    are ordered by 10-minute timestamp by construction.
+    Rows are ordered by 10-minute timestamp (`id_time`) by construction, so we
+    pull only the metric column. CSV is the published format; parquet support
+    is kept for repackaged mirrors.
     """
-    try:
-        import pyarrow.parquet as pq
-    except ImportError as e:
-        raise RuntimeError(
-            "pyarrow is required to read CESNET parquets; install with "
-            "`pip install pyarrow`"
-        ) from e
+    if path.endswith(".parquet"):
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as e:
+            raise RuntimeError(
+                "pyarrow is required to read CESNET parquets; install with "
+                "`pip install pyarrow`"
+            ) from e
+        table = pq.read_table(path, columns=[metric])
+        arr = table.column(metric).to_numpy(zero_copy_only=False)
+        return np.asarray(arr, dtype=np.float32)
 
-    table = pq.read_table(path, columns=[metric])
-    arr = table.column(metric).to_numpy(zero_copy_only=False)
-    return np.asarray(arr, dtype=np.float32)
+    # CSV path — read just the metric column to keep memory low.
+    import pandas as pd
+    col = pd.read_csv(path, usecols=[metric])[metric].to_numpy()
+    return np.asarray(col, dtype=np.float32)
 
 
 def load_cesnet(
@@ -94,6 +120,7 @@ def load_cesnet(
     top_n_institutions: Optional[int] = None,
     train_frac: float = 0.6,
     val_frac: float = 0.2,
+    length_tolerance: float = 0.05,
 ) -> dict:
     """Load CESNET-TimeSeries24 institution-level traces.
 
@@ -110,15 +137,15 @@ def load_cesnet(
     Returns the same dict shape as `load_abilene`. R = identity since CESNET
     has no link-level structure; institution traces are the "links."
     """
-    parquet_paths = _list_institution_parquets(raw_dir)
-    print(f"[cesnet] found {len(parquet_paths)} institution parquets under {raw_dir}")
+    file_paths = _list_institution_files(raw_dir)
+    print(f"[cesnet] found {len(file_paths)} institution files under {raw_dir}")
 
     institution_ids: list[str] = []
     traces: list[np.ndarray] = []
-    for p in parquet_paths:
+    for p in file_paths:
         inst = os.path.splitext(os.path.basename(p))[0]
         try:
-            col = _read_one_parquet(p, metric)
+            col = _read_one_institution(p, metric)
         except Exception as e:
             print(f"[cesnet] WARN: skipping {p}: {e}")
             continue
@@ -126,17 +153,37 @@ def load_cesnet(
         traces.append(col)
 
     if not traces:
-        raise RuntimeError(f"no usable parquets under {raw_dir}")
+        raise RuntimeError(f"no usable institution files under {raw_dir}")
 
-    # Length-align: take the shortest length across institutions. Mismatches
-    # are rare but the upstream release has occasionally trimmed some
-    # institutions early; better to truncate than to NaN-pad.
+    # Drop empty / truncated institutions BEFORE aligning. The real release has
+    # a handful of institutions with zero or near-zero rows (joined monitoring
+    # late or were trimmed); the canonical length is ~40k (40 weeks @ 10 min).
+    # Taking a naive global min collapses everything to the shortest stub, so we
+    # filter to traces within `length_tolerance` of the modal (most common)
+    # length, then trim survivors to their common min.
+    lengths = np.array([len(tr) for tr in traces])
+    modal_len = int(np.bincount(lengths).argmax())  # most common length
+    min_keep = int(modal_len * (1.0 - length_tolerance))
+    keep = lengths >= max(min_keep, 1)
+    n_dropped = int((~keep).sum())
+    if n_dropped:
+        dropped = [institution_ids[i] for i in np.where(~keep)[0]]
+        print(f"[cesnet] dropped {n_dropped} institutions shorter than "
+              f"{min_keep} steps (modal length {modal_len}): "
+              f"{dropped[:10]}{'...' if n_dropped > 10 else ''}")
+    institution_ids = [iid for iid, k in zip(institution_ids, keep) if k]
+    traces = [tr for tr, k in zip(traces, keep) if k]
+    if not traces:
+        raise RuntimeError(
+            f"all institutions under {raw_dir} were shorter than {min_keep} "
+            f"steps; check the data or lower length_tolerance"
+        )
+
+    # Length-align survivors to their common (shortest) length.
     T = min(len(tr) for tr in traces)
     if any(len(tr) != T for tr in traces):
-        n_short = sum(1 for tr in traces if len(tr) < T) + sum(
-            1 for tr in traces if len(tr) > T
-        )
-        print(f"[cesnet] WARN: {n_short} institutions had non-canonical length; "
+        n_trim = sum(1 for tr in traces if len(tr) != T)
+        print(f"[cesnet] {n_trim} kept institutions had off-by-a-few lengths; "
               f"trimming all to T={T}")
     L_full = np.stack([tr[:T] for tr in traces], axis=1).astype(np.float32)
 
