@@ -246,48 +246,69 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
 
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
-    plt.figure(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(8.5, 6.0))
 
     palette = {
-        "SARIMA": "tab:gray", "LSTM": "tab:blue",
-        "DLinear": "tab:green", "PatchTST": "tab:purple",
-        "iTransformer": "tab:red", "DCRNN": "tab:orange",
-        "Chronos": "tab:brown",
+        "SARIMA": "#7f7f7f", "LSTM": "#1f77b4",
+        "DLinear": "#2ca02c", "PatchTST": "#9467bd",
+        "iTransformer": "#d62728", "DCRNN": "#ff7f0e",
+        "Chronos": "#8c564b",
     }
 
+    def _engfmt(v):
+        """Compact engineering-style number for axis ticks / annotations.
+
+        Uses fixed-point (not %g) so values like 2e8 render as "200M", never
+        "2e+02M". Trailing zeros are trimmed (250M, not 250.0M).
+        """
+        a = abs(v)
+        if a >= 1e9:
+            s, suf = v / 1e9, "B"
+        elif a >= 1e6:
+            s, suf = v / 1e6, "M"
+        elif a >= 1e3:
+            s, suf = v / 1e3, "k"
+        else:
+            s, suf = v, ""
+        txt = f"{s:.1f}".rstrip("0").rstrip(".")
+        return f"{txt}{suf}"
+
+    plotted_any = False
     for model, entries in points.items():
+        if model.endswith("_CQR") or model.endswith("_ACI"):
+            continue
         xs = [e["over_provisioning_cost"] for e in entries
               if e["over_provisioning_cost"] is not None
               and e["overload_rate"] is not None]
         ys = [e["overload_rate"] for e in entries
               if e["over_provisioning_cost"] is not None
               and e["overload_rate"] is not None]
+        es = [e for e in entries
+              if e["over_provisioning_cost"] is not None
+              and e["overload_rate"] is not None]
         if not xs:
             continue
-        color = palette.get(model, None)
-        # Skip _CQR / _ACI rows in the headline plot — they go in their
-        # own panel because they shrink the over-prov axis differently.
-        if model.endswith("_CQR") or model.endswith("_ACI"):
-            continue
-        plt.plot(xs, ys, "-", color=color, alpha=0.85,
-                 linewidth=1.5, label=model)
-        # Per-point markers: ring the marker if the point is statistically
-        # distinguishable from the Wilcoxon reference.
-        for x, y, e in zip(xs, ys, entries):
+        plotted_any = True
+        color = palette.get(model, "#1f77b4")
+        ax.plot(xs, ys, "-", color=color, alpha=0.9, linewidth=2.2,
+                label=f"{model} (asym sweep)", zorder=3)
+        for x, y, e in zip(xs, ys, es):
             ring = False
             if significance is not None and model != wilcoxon_reference:
                 ring = bool(significance.get(e["ratio"], {}).get(model))
-            edge = "black" if ring else color
-            edgew = 1.2 if ring else 0.0
-            plt.plot([x], [y], "o", color=color,
-                     markeredgecolor=edge, markeredgewidth=edgew,
-                     markersize=7, alpha=0.95)
-            plt.annotate(f"  {e['ratio']}", (x, y),
-                         fontsize=7, alpha=0.6)
+            ax.plot([x], [y], "o", color=color,
+                    markeredgecolor="black" if ring else "white",
+                    markeredgewidth=1.4 if ring else 0.8,
+                    markersize=9, alpha=0.98, zorder=4)
+            # Ratio label, offset above-right of the point, in the line colour.
+            ax.annotate(f"{e['ratio']}", (x, y),
+                        textcoords="offset points", xytext=(7, 5),
+                        fontsize=9, fontweight="bold", color=color, zorder=5)
 
-    # Overlay MSE-baseline points as large black X markers per model.
+    # MSE-baseline X markers + a guide line from the frontier to show dominance.
     if mse_baseline is not None:
         for model, block in mse_baseline.get("models", {}).items():
             if model.endswith("_CQR") or model.endswith("_ACI"):
@@ -297,39 +318,47 @@ def plot_pareto(points: dict[str, list[dict]], save_path: str,
             y = op.get("overload_rate", {}).get("mean")
             if x is None or y is None:
                 continue
-            color = palette.get(model, None)
-            plt.scatter([x], [y], marker="x", s=120, c="black",
-                        linewidth=2.0, zorder=5,
-                        label=f"{model} (MSE)" if color is None else None)
+            ax.scatter([x], [y], marker="X", s=210, c="black",
+                       edgecolors="white", linewidth=1.2, zorder=6,
+                       label="MSE baseline")
+            ax.annotate("MSE", (x, y), textcoords="offset points",
+                        xytext=(10, -4), fontsize=10, fontweight="bold",
+                        color="black", zorder=7)
 
-    plt.xlabel("Mean over-provisioning cost")
-    plt.ylabel("Mean overload rate")
-    title = "Pareto frontier: over-provisioning vs overload"
+    ax.set_xlabel("Mean over-provisioning cost  (lower = better)", fontsize=11)
+    ax.set_ylabel("Mean overload rate  (lower = better)", fontsize=11)
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: _engfmt(v)))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v * 100:.0f}%"))
+
+    ttl = "Operational trade-off: provisioning cost vs. overload rate"
     if dataset:
-        title += f" ({dataset})"
-    plt.title(title)
-    plt.grid(True, alpha=0.3)
-    # Only draw a legend if at least one labelled line was plotted; avoids
-    # the "no artists with labels" warning when the input is _CQR/_ACI only.
-    handles, labels = plt.gca().get_legend_handles_labels()
+        ttl += f"  —  {dataset}"
+    ax.set_title(ttl, fontsize=13, fontweight="bold", pad=12)
+    ax.grid(True, which="major", linestyle=":", linewidth=0.8, alpha=0.5)
+    ax.set_axisbelow(True)
+
+    handles, labels = ax.get_legend_handles_labels()
     if handles:
-        plt.legend(fontsize=9, loc="best")
-    if mse_baseline is not None:
-        plt.figtext(
-            0.01, 0.01,
-            "Black X = MSE-trained baseline (one per model)",
-            ha="left", va="bottom", fontsize=7, alpha=0.7,
-        )
+        # de-dup repeated "MSE baseline" labels from multi-model overlays
+        seen, h2, l2 = set(), [], []
+        for h, l in zip(handles, labels):
+            if l in seen:
+                continue
+            seen.add(l); h2.append(h); l2.append(l)
+        ax.legend(h2, l2, fontsize=9.5, loc="best", framealpha=0.92)
+
+    note = ("Each point = one training α:β; lower-left is better. "
+            "The asym frontier sits below-left of the MSE baseline "
+            "→ lower overload at comparable cost.")
     if significance is not None and wilcoxon_reference is not None:
-        plt.figtext(
-            0.99, 0.01,
-            f"Black ring = significantly beats {wilcoxon_reference} "
-            f"(paired Wilcoxon, Holm p < 0.05)",
-            ha="right", va="bottom", fontsize=7, alpha=0.7,
-        )
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=150)
-    plt.close()
+        note += (f"\nBlack ring = significantly beats {wilcoxon_reference} "
+                 f"(paired Wilcoxon, Holm p<0.05).")
+    fig.text(0.5, -0.01, note, ha="center", va="top", fontsize=8.5,
+             alpha=0.75, wrap=True)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
     print(f"[pareto] wrote {save_path}")
 
 

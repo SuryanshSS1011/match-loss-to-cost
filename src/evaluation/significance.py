@@ -316,78 +316,158 @@ def critical_difference_diagram(
     K = len(next(iter(values_by_model.values())))
     cd = _critical_difference(M, K, alpha=alpha)
 
-    # Sort by ascending rank (best first).
+    # Sort by ascending rank (best first → leftmost, since the axis is inverted).
     order = np.argsort(avg_ranks)
     models_sorted = [models[i] for i in order]
     ranks_sorted = avg_ranks[order]
-
-    # Layout: a horizontal axis from 1 to M; each model labelled at its rank.
-    # Cliques (groups not significantly different by CD) drawn as bars below
-    # the axis. Demsar's recipe.
-    fig, ax = plt.subplots(figsize=(8, 2.0 + 0.3 * M))
-    ax.set_xlim(M + 0.5, 0.5)  # invert so rank 1 is on the left
-    ax.set_ylim(-1.0 - 0.3 * M, 1.5)
-    ax.set_yticks([])
-    ax.spines["top"].set_position(("data", 0.0))
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_visible(False)
-    ax.tick_params(axis="x", which="both", direction="in",
-                   top=True, bottom=False, labeltop=True, labelbottom=False)
-    ax.set_xticks(range(1, M + 1))
-    ax.set_xlabel("Average rank (lower = better)" if lower_is_better
-                  else "Average rank (higher = better)")
-    ax.xaxis.set_label_position("top")
-
-    # Plot model labels on alternating sides for readability.
-    half = (M + 1) // 2
-    for i, (m, r) in enumerate(zip(models_sorted, ranks_sorted)):
-        if i < half:
-            # Left side: extend left, label on the far left.
-            y = -0.5 - 0.3 * i
-            ax.plot([r, 0.5], [0.0, y], "k-", linewidth=0.8)
-            ax.plot([0.5, 0.5 + 0.05], [y, y], "k-", linewidth=0.8)
-            ax.text(0.5 + 0.1, y, f"{m}  ({r:.2f})",
-                    ha="left", va="center", fontsize=9)
-        else:
-            j = i - half
-            y = -0.5 - 0.3 * (M - 1 - i)
-            ax.plot([r, M + 0.5], [0.0, y], "k-", linewidth=0.8)
-            ax.plot([M + 0.5, M + 0.5 - 0.05], [y, y], "k-", linewidth=0.8)
-            ax.text(M + 0.5 - 0.1, y, f"({r:.2f})  {m}",
-                    ha="right", va="center", fontsize=9)
-
-    # Cliques: pairs of consecutive models (in rank order) within CD.
-    # Demsar draws a thick horizontal bar covering each maximal clique.
-    cliques: list[tuple[float, float]] = []
     n = len(ranks_sorted)
-    i = 0
-    while i < n - 1:
+
+    # --- Maximal cliques (Demsar 2006): every *maximal* run of models whose
+    # rank span is within CD. Unlike a greedy consecutive merge, we scan every
+    # start i and take the longest run [i..j] with ranks[j]-ranks[i] <= cd,
+    # then drop runs that are fully contained in another (keep only maximal,
+    # length >= 2). This is the canonical "connect models that are not
+    # significantly different" recipe.
+    runs: list[tuple[int, int]] = []
+    for i in range(n):
         j = i
-        while j + 1 < n and ranks_sorted[j + 1] - ranks_sorted[i] <= cd:
+        while j + 1 < n and ranks_sorted[j + 1] - ranks_sorted[i] <= cd + 1e-9:
             j += 1
         if j > i:
-            cliques.append((ranks_sorted[i], ranks_sorted[j]))
-            i = j + 1
-        else:
-            i += 1
-    for k_idx, (r_lo, r_hi) in enumerate(cliques):
-        y = 0.4 + 0.15 * k_idx
-        ax.plot([r_lo, r_hi], [y, y], "k-", linewidth=4.0, solid_capstyle="butt")
+            runs.append((i, j))
+    cliques: list[tuple[int, int]] = []
+    for (a, b) in runs:
+        if not any(a2 <= a and b <= b2 and (a2, b2) != (a, b) for (a2, b2) in runs):
+            cliques.append((a, b))
 
-    # CD bar at the top-right, for scale.
-    ax.plot([1.0, 1.0 + cd], [1.1, 1.1], "k-", linewidth=2.0)
-    ax.plot([1.0, 1.0], [1.05, 1.15], "k-", linewidth=2.0)
-    ax.plot([1.0 + cd, 1.0 + cd], [1.05, 1.15], "k-", linewidth=2.0)
-    ax.text(1.0 + cd / 2.0, 1.25, f"CD = {cd:.2f}",
-            ha="center", va="bottom", fontsize=9)
+    # --- Layout in data coords. Axis spans rank 1..M, drawn inverted so the
+    # best (lowest) rank is on the RIGHT — the standard Demsar orientation where
+    # the right half of models fans right and the left half fans left.
+    # Vertical zones (top→bottom), no overlap:
+    #   CD ruler  →  rank axis (y=0, ticks above)  →  clique bars just below
+    #   →  leader lines fanning to model labels, each on its OWN row.
+    #
+    # Split: the best half (lowest ranks) go to the RIGHT column, the worst half
+    # to the LEFT column. Each model gets a unique row so tied ranks never share
+    # a label line; their vertical connectors branch at the top but land on
+    # distinct rows, staying legible.
+    n_right = n // 2                      # best ranks → right column
+    n_left = n - n_right                  # worst ranks → left column
+    rows_per_side = max(n_left, n_right)
+    # Clean, non-overlapping y-bands below the axis (y=0), top→bottom:
+    #   clique bars  →  tie-fork notches  →  first label row.
+    n_cliques = max(len(cliques), 1)
+    clique_y0 = -0.18                     # first (topmost) clique bar
+    clique_dy = 0.16
+    clique_band = clique_y0 - clique_dy * (n_cliques - 1)   # lowest bar
+    fork_y = clique_band - 0.14           # tie forks sit just BELOW all bars
+    row_top = fork_y - 0.34               # first label row, below the forks
+    row_gap = 0.60
+    label_bottom = row_top - row_gap * (rows_per_side - 1)
+    y_min = label_bottom - 0.5
+    y_max = 2.55                           # headroom for the centred title
+
+    longest = max((len(m) for m in models_sorted), default=8)
+    fig_w = max(8.5, 5.5 + 0.13 * longest + 0.35 * M)
+    fig_h = 2.6 + 0.42 * rows_per_side
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+    pad = 1.1
+    ax.set_xlim(M + pad, 1 - pad)         # inverted: rank 1 on the right... no:
+    # set_xlim(hi, lo) with hi>lo flips the axis so SMALL ranks render on the
+    # RIGHT. Labels live in the pad beyond the rank-1 (right) and rank-M (left)
+    # ends, outside where any leader line runs.
+    ax.set_ylim(y_min, y_max)
+    ax.axis("off")
+
+    # Rank axis: clean line, ticks + numbers above it, italic caption higher up.
+    ax.plot([1, M], [0, 0], color="black", linewidth=1.3, zorder=1)
+    for r in range(1, M + 1):
+        ax.plot([r, r], [0, 0.12], color="black", linewidth=1.0, zorder=1)
+        ax.text(r, 0.24, str(r), ha="center", va="bottom", fontsize=11)
+    ax.text((1 + M) / 2.0, 0.62,
+            "Average rank  (lower = better)" if lower_is_better
+            else "Average rank  (higher = better)",
+            ha="center", va="bottom", fontsize=10.5, style="italic")
+
+    # Leader lines + labels. Right column = the n_right best (smallest) ranks,
+    # ordered so the very best sits on the TOP row nearest the axis.
+    edge_left, edge_right = float(M), 1.0   # left column ends at rank M, right at 1
+    # Tied-rank handling: give each model a tiny unique x-offset for the vertical
+    # connector's top so coincident verticals separate visibly.
+    from collections import defaultdict
+    tie_groups: dict[float, list[int]] = defaultdict(list)
+    for idx, rr in enumerate(ranks_sorted):
+        tie_groups[round(float(rr), 6)].append(idx)
+    tie_offset = {}
+    for rr, idxs in tie_groups.items():
+        if len(idxs) == 1:
+            tie_offset[idxs[0]] = 0.0
+        else:
+            spread = 0.07
+            for k, idx in enumerate(idxs):
+                tie_offset[idx] = (k - (len(idxs) - 1) / 2.0) * spread
+
+    for i, (m, r) in enumerate(zip(models_sorted, ranks_sorted)):
+        on_right = i < n_right
+        if on_right:
+            row = i
+            edge = edge_right
+        else:
+            row = i - n_right
+            edge = edge_left
+        y = row_top - row_gap * row
+        # Tied-rank connector: the vertical leaves the axis exactly at the true
+        # rank `r` (so it meets its tick honestly), then forks to a nudged x a
+        # short way down before continuing to the row. Untied ranks go straight.
+        off = tie_offset[i]
+        if abs(off) < 1e-9:
+            ax.plot([r, r], [0.0, y], color="black", linewidth=0.9, zorder=2)
+            x_join = r
+        else:
+            # fork below the clique band so the notch never touches a bar.
+            ax.plot([r, r], [0.0, fork_y], color="black", linewidth=0.9, zorder=2)
+            ax.plot([r, r + off], [fork_y, fork_y], color="black",
+                    linewidth=0.9, zorder=2)
+            ax.plot([r + off, r + off], [fork_y, y], color="black",
+                    linewidth=0.9, zorder=2)
+            x_join = r + off
+        # horizontal out to the column edge, then the label just beyond it.
+        ax.plot([x_join, edge], [y, y], color="black", linewidth=0.9, zorder=2)
+        ty = y - 0.05
+        if on_right:
+            ax.text(edge - 0.16, ty, f"({r:.2f})  {m}",
+                    ha="left", va="top", fontsize=10.5)
+        else:
+            ax.text(edge + 0.16, ty, f"{m}  ({r:.2f})",
+                    ha="right", va="top", fontsize=10.5)
+
+    # Clique bars: thick, between the axis and the labels, stacked downward.
+    for k_idx, (a, b) in enumerate(cliques):
+        y = clique_y0 - clique_dy * k_idx
+        r_lo, r_hi = ranks_sorted[a], ranks_sorted[b]
+        ax.plot([r_lo, r_hi], [y, y], color="black", linewidth=5.0,
+                solid_capstyle="round", zorder=3)
+
+    # CD ruler at the top — clearly separated, with end caps. Drawn at the
+    # worst-rank (left) side so it never overlaps the best models' label rows.
+    cd_y = 1.50
+    cd_x1 = float(M)
+    cd_x0 = M - cd
+    ax.plot([cd_x0, cd_x1], [cd_y, cd_y], color="black", linewidth=1.6)
+    for xc in (cd_x0, cd_x1):
+        ax.plot([xc, xc], [cd_y - 0.07, cd_y + 0.07], color="black", linewidth=1.6)
+    ax.text((cd_x0 + cd_x1) / 2.0, cd_y + 0.12, f"CD = {cd:.2f}",
+            ha="center", va="bottom", fontsize=10.5)
 
     if title:
-        fig.suptitle(title, fontsize=10)
+        # Center over the rank axis (the visual centre of the figure), not the
+        # axes bounding box — the asymmetric label pads otherwise shift a
+        # set_title()/suptitle() off to one side.
+        ax.text((1 + M) / 2.0, y_max - 0.08, title,
+                ha="center", va="top", fontsize=13, fontweight="bold")
 
     _os.makedirs(_os.path.dirname(save_path) or ".", exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(save_path, dpi=150)
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     return {
@@ -395,4 +475,5 @@ def critical_difference_diagram(
         "cd": float(cd),
         "M": int(M),
         "K": int(K),
+        "cliques": [(models_sorted[a], models_sorted[b]) for (a, b) in cliques],
     }
