@@ -7,18 +7,18 @@
   "models": {
     "LSTM": {
       "forecast": {
-        "rmse_mean": 91.59615325927734,
-        "mae_mean": 44.77739334106445,
-        "mape_mean": 22.36649054951138,
-        "smape_mean": 19.39851951599121
+        "rmse_mean": 170.62774658203125,
+        "mae_mean": 103.97258758544922,
+        "mape_mean": 51.05171122374358,
+        "smape_mean": 38.04017639160156
       },
       "operational": {
-        "overload_rate": 0.014391082733785211,
-        "sla_violation_rate": 0.014391082733785211,
-        "over_provisioning_cost": 834845632.0,
-        "asymmetric_op_cost": 838268672.0,
-        "u_max_mean": 1.3368487358093262,
-        "u_max_max": 3.362154245376587
+        "overload_rate": 0.07347452595214411,
+        "sla_violation_rate": 0.07347452595214411,
+        "over_provisioning_cost": 364203328.0,
+        "asymmetric_op_cost": 380630304.0,
+        "u_max_mean": 2.414623498916626,
+        "u_max_max": 7.805657386779785
       }
     }
   }

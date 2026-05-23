@@ -1,0 +1,479 @@
+{
+  "dataset": "abilene",
+  "loss_form": "asym_l1",
+  "reference": "MSE",
+  "cd": {
+    "ranks": {
+      "MSE": 4.666666666666667,
+      "asym 1:1": 6.666666666666667,
+      "asym 2:1": 5.666666666666667,
+      "asym 5:1": 3.6666666666666665,
+      "asym 10:1": 2.3333333333333335,
+      "asym 20:1": 1.5,
+      "asym 100:1": 3.5
+    },
+    "cd": 3.678049211198784,
+    "M": 7,
+    "K": 6,
+    "cliques": [
+      [
+        "asym 20:1",
+        "MSE"
+      ],
+      [
+        "asym 10:1",
+        "asym 2:1"
+      ],
+      [
+        "asym 100:1",
+        "asym 1:1"
+      ]
+    ]
+  },
+  "wilcoxon": {
+    "1:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 35219065548.8,
+        "mean_b": 41185138483.2,
+        "mean_diff": -5966072934.4,
+        "statistic": 15.0,
+        "pvalue": 0.00013065338134765625,
+        "n_pairs": 20,
+        "pvalue_holm": 0.0007839202880859375,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 37128705126.4,
+        "mean_b": 41185138483.2,
+        "mean_diff": -4056433356.8,
+        "statistic": 38.0,
+        "pvalue": 0.005344390869140625,
+        "n_pairs": 20,
+        "pvalue_holm": 0.026721954345703125,
+        "reject": true
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 40923821158.4,
+        "mean_b": 41185138483.2,
+        "mean_diff": -261317324.8,
+        "statistic": 109.0,
+        "pvalue": 0.5652561187744141,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 53748891852.8,
+        "mean_b": 41185138483.2,
+        "mean_diff": 12563753369.6,
+        "statistic": 208.0,
+        "pvalue": 0.9999980926513672,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 59720417689.6,
+        "mean_b": 41185138483.2,
+        "mean_diff": 18535279206.4,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 135804191948.8,
+        "mean_b": 41185138483.2,
+        "mean_diff": 94619053465.6,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ],
+    "2:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 57369023283.2,
+        "mean_b": 76568974131.2,
+        "mean_diff": -19199950848.0,
+        "statistic": 1.0,
+        "pvalue": 1.9073486328125e-06,
+        "n_pairs": 20,
+        "pvalue_holm": 1.1444091796875e-05,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 50406141132.8,
+        "mean_b": 76568974131.2,
+        "mean_diff": -26162832998.4,
+        "statistic": 7.0,
+        "pvalue": 1.811981201171875e-05,
+        "n_pairs": 20,
+        "pvalue_holm": 9.059906005859375e-05,
+        "reject": true
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 74229864448.0,
+        "mean_b": 76568974131.2,
+        "mean_diff": -2339109683.2,
+        "statistic": 98.0,
+        "pvalue": 0.4061775207519531,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 142935709696.0,
+        "mean_b": 76568974131.2,
+        "mean_diff": 66366735564.8,
+        "statistic": 209.0,
+        "pvalue": 0.9999990463256836,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 116841509683.2,
+        "mean_b": 76568974131.2,
+        "mean_diff": 40272535552.0,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 103150928281.6,
+        "mean_b": 76568974131.2,
+        "mean_diff": 26581954150.4,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ],
+    "5:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 123818899046.4,
+        "mean_b": 182720479232.0,
+        "mean_diff": -58901580185.6,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 90238449868.8,
+        "mean_b": 182720479232.0,
+        "mean_diff": -92482029363.2,
+        "statistic": 1.0,
+        "pvalue": 1.9073486328125e-06,
+        "n_pairs": 20,
+        "pvalue_holm": 9.5367431640625e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 164330258432.0,
+        "mean_b": 182720479232.0,
+        "mean_diff": -18390220800.0,
+        "statistic": 70.0,
+        "pvalue": 0.10122489929199219,
+        "n_pairs": 20,
+        "pvalue_holm": 0.40489959716796875,
+        "reject": false
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 174147997286.4,
+        "mean_b": 182720479232.0,
+        "mean_diff": -8572481945.6,
+        "statistic": 89.0,
+        "pvalue": 0.28529834747314453,
+        "n_pairs": 20,
+        "pvalue_holm": 0.8558950424194336,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 288204781158.4,
+        "mean_b": 182720479232.0,
+        "mean_diff": 105484301926.4,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 251357038182.4,
+        "mean_b": 182720479232.0,
+        "mean_diff": 68636558950.4,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ],
+    "10:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 234568688435.2,
+        "mean_b": 359639656038.4,
+        "mean_diff": -125070967603.2,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 156625632460.8,
+        "mean_b": 359639656038.4,
+        "mean_diff": -203014023577.6,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 199987838566.4,
+        "mean_b": 359639656038.4,
+        "mean_diff": -159651817472.0,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 340678211993.6,
+        "mean_b": 359639656038.4,
+        "mean_diff": -18961444044.8,
+        "statistic": 87.0,
+        "pvalue": 0.2608366012573242,
+        "n_pairs": 20,
+        "pvalue_holm": 0.7825098037719727,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 573810247270.4,
+        "mean_b": 359639656038.4,
+        "mean_diff": 214170591232.0,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 498367224217.6,
+        "mean_b": 359639656038.4,
+        "mean_diff": 138727568179.2,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ],
+    "20:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 456068271308.8,
+        "mean_b": 713478012928.0,
+        "mean_diff": -257409741619.2,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 289399994777.6,
+        "mean_b": 713478012928.0,
+        "mean_diff": -424078018150.4,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 271303002521.6,
+        "mean_b": 713478012928.0,
+        "mean_diff": -442175010406.4,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 673738653696.0,
+        "mean_b": 713478012928.0,
+        "mean_diff": -39739359232.0,
+        "statistic": 87.0,
+        "pvalue": 0.2608366012573242,
+        "n_pairs": 20,
+        "pvalue_holm": 0.7825098037719727,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 1145021169664.0,
+        "mean_b": 713478012928.0,
+        "mean_diff": 431543156736.0,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 992387573350.4,
+        "mean_b": 713478012928.0,
+        "mean_diff": 278909560422.4,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ],
+    "100:1": [
+      {
+        "model_a": "asym 10:1",
+        "model_b": "MSE",
+        "mean_a": 2228064944128.0,
+        "mean_b": 3544184861491.2,
+        "mean_diff": -1316119917363.2,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 20:1",
+        "model_b": "MSE",
+        "mean_a": 1351594908057.6,
+        "mean_b": 3544184861491.2,
+        "mean_diff": -2192589953433.6,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 100:1",
+        "model_b": "MSE",
+        "mean_a": 841824314982.4,
+        "mean_b": 3544184861491.2,
+        "mean_diff": -2702360546508.8,
+        "statistic": 0.0,
+        "pvalue": 9.5367431640625e-07,
+        "n_pairs": 20,
+        "pvalue_holm": 5.7220458984375e-06,
+        "reject": true
+      },
+      {
+        "model_a": "asym 5:1",
+        "model_b": "MSE",
+        "mean_a": 3338222174208.0,
+        "mean_b": 3544184861491.2,
+        "mean_diff": -205962687283.2,
+        "statistic": 86.0,
+        "pvalue": 0.24900436401367188,
+        "n_pairs": 20,
+        "pvalue_holm": 0.7470130920410156,
+        "reject": false
+      },
+      {
+        "model_a": "asym 1:1",
+        "model_b": "MSE",
+        "mean_a": 5714708450508.8,
+        "mean_b": 3544184861491.2,
+        "mean_diff": 2170523589017.6,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      },
+      {
+        "model_a": "asym 2:1",
+        "model_b": "MSE",
+        "mean_a": 4944550546636.8,
+        "mean_b": 3544184861491.2,
+        "mean_diff": 1400365685145.6,
+        "statistic": 210.0,
+        "pvalue": 1.0,
+        "n_pairs": 20,
+        "pvalue_holm": 1.0,
+        "reject": false
+      }
+    ]
+  }
+}

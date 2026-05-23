@@ -1,0 +1,25 @@
+{
+  "seed": 31337,
+  "dataset": "abilene",
+  "loss": "asym",
+  "T_eff": 9606,
+  "num_links": 54,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 283.551025390625,
+        "mae_mean": 255.60499572753906,
+        "mape_mean": 134.39032275588423,
+        "smape_mean": 64.35235595703125
+      },
+      "operational": {
+        "overload_rate": 0.02443495963171166,
+        "sla_violation_rate": 0.02443495963171166,
+        "over_provisioning_cost": 854216640.0,
+        "asymmetric_op_cost": 998759040.0,
+        "u_max_mean": 1.5132355690002441,
+        "u_max_max": 5.473430156707764
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "seed": 789,
+  "dataset": "cesnet",
+  "loss": "asym_l1",
+  "T_eff": 7624,
+  "num_links": 20,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 57.77228546142578,
+        "mae_mean": 53.018287658691406,
+        "mape_mean": 295.0883163452148,
+        "smape_mean": 90.94255065917969
+      },
+      "operational": {
+        "overload_rate": 0.01401495278069255,
+        "sla_violation_rate": 0.01401495278069255,
+        "over_provisioning_cost": 18857020.0,
+        "asymmetric_op_cost": 20974112.0,
+        "u_max_mean": 4.241410732269287,
+        "u_max_max": 7.557106018066406
+      }
+    }
+  }
+}

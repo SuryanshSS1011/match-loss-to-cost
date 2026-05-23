@@ -1,0 +1,59 @@
+{
+  "target_alphas": [
+    0.05,
+    0.1,
+    0.2
+  ],
+  "rows": [
+    "LSTM_CQR",
+    "LSTM_ACI"
+  ],
+  "per_row": {
+    "LSTM_CQR": [
+      {
+        "target_alpha": 0.05,
+        "target_coverage": 0.95,
+        "coverage_overall": 0.8857397190027838,
+        "mean_width": 274.30985565185546,
+        "qhat_mean": 53.28565166487738
+      },
+      {
+        "target_alpha": 0.1,
+        "target_coverage": 0.9,
+        "coverage_overall": 0.843727107286341,
+        "mean_width": 258.6700439453125,
+        "qhat_mean": 45.4657406102176
+      },
+      {
+        "target_alpha": 0.2,
+        "target_coverage": 0.8,
+        "coverage_overall": 0.7681806702600998,
+        "mean_width": 238.62174606323242,
+        "qhat_mean": 35.4415948336323
+      }
+    ],
+    "LSTM_ACI": [
+      {
+        "target_alpha": 0.05,
+        "target_coverage": 0.95,
+        "coverage_overall": 0.9468706865307949,
+        "mean_width": 349.7305938720703,
+        "qhat_mean": 97.67736812035244
+      },
+      {
+        "target_alpha": 0.1,
+        "target_coverage": 0.9,
+        "coverage_overall": 0.8945162552725534,
+        "mean_width": 314.41502532958987,
+        "qhat_mean": 83.10624127123091
+      },
+      {
+        "target_alpha": 0.2,
+        "target_coverage": 0.8,
+        "coverage_overall": 0.7892365689653843,
+        "mean_width": 274.0315361022949,
+        "qhat_mean": 64.12509602529032
+      }
+    ]
+  }
+}

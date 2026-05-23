@@ -1,0 +1,25 @@
+{
+  "seed": 256,
+  "dataset": "geant",
+  "loss": "asym",
+  "T_eff": 2083,
+  "num_links": 58,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 2972.35302734375,
+        "mae_mean": 2918.64697265625,
+        "mape_mean": 1013.1935177178218,
+        "smape_mean": 142.44398498535156
+      },
+      "operational": {
+        "overload_rate": 0.27940470475276047,
+        "sla_violation_rate": 0.27940470475276047,
+        "over_provisioning_cost": 294190016.0,
+        "asymmetric_op_cost": 1394916352.0,
+        "u_max_mean": 215705186205696.0,
+        "u_max_max": 2318928273473536.0
+      }
+    }
+  }
+}

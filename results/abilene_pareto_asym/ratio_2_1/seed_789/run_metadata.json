@@ -9,7 +9,7 @@
     "lstm"
   ],
   "git": {
-    "commit": "b56d989b58895f473acd1076f3274d95c3e21d1a",
+    "commit": "465fe905881915ffaa97863c1aaa1c0b55736bd1",
     "dirty": true
   },
   "config": {
@@ -37,7 +37,7 @@
     "sarima_test_steps": "288",
     "sarima_train_window": "4032",
     "sarima_link_subset": "8",
-    "sarima_n_jobs": "-1",
+    "sarima_n_jobs": "2",
     "lstm_hidden_size": "64",
     "lstm_num_layers": "2",
     "lstm_epochs": "50",
@@ -81,5 +81,5 @@
     "total_time_steps": "4032",
     "seasonal_period": "288"
   },
-  "timestamp": "2026-05-01T22:30:23.021375"
+  "timestamp": "2026-05-27T12:29:38.762315"
 }
