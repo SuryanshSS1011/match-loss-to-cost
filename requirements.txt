@@ -1,10 +1,30 @@
+# Provision-Aware — top-level dependencies (loose spec).
+# For an exact, reproducible pin of the environment that produced the
+# committed results, use requirements.lock.txt instead.
+
+# --- core scientific stack ---
 numpy
 pandas
+scipy
 networkx
 matplotlib
-statsmodels
-torch
-scikit-learn
 joblib
+
+# --- forecasting models ---
+statsmodels        # SARIMA, Holt-Winters, seasonal-naive
+torch              # LSTM, PatchTST, iTransformer, DLinear, DCRNN
+scikit-learn       # metrics, splits
+
+# --- conformal prediction ---
+mapie              # split CP / CQR utilities
+
+# --- real-dataset I/O ---
+pyarrow            # CESNET parquet mirrors (the published CSV uses pandas)
+
+# --- foundation-model baseline (Chronos-Bolt zero-shot) ---
+chronos-forecasting
+transformers
+accelerate
+
+# --- testing ---
 pytest
-scipy
