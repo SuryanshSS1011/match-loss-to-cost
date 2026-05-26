@@ -24,6 +24,10 @@ wheels/
 venv/
 env/
 ENV/
+.venv/
+
+# Claude Code local config / memory
+.claude/
 
 # Data files (large, regenerable)
 data/*.npz
@@ -35,6 +39,13 @@ data/raw/
 CLAUDE.md
 STEPS.md
 plan.md
+EXPERIMENT_PLAN.md
+
+# Generated tables / paper working dir 
+report/
+
+# Local-only working dirs
+.stale_results_quarantine/
 
 # Paper-prep docs (drafted for our own writing, not for the public repo)
 docs/paper/
