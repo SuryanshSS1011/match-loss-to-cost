@@ -183,3 +183,17 @@ done
 Baselines implemented: seasonal-naive, Holt-Winters, historical-average, SARIMA, LSTM, DLinear,
 PatchTST, iTransformer, DCRNN, Chronos-Bolt (zero-shot). Cross-architecture loss ablation
 (PatchTST/iTransformer) and the full 9-baseline matrix are planned as a journal/INFOCOM extension.
+
+## Artifacts on HuggingFace
+
+- **Predictions (reproduction path):**
+  [`SuryanshSS1011/provision-aware-predictions`](https://huggingface.co/datasets/SuryanshSS1011/provision-aware-predictions)
+  — per-(dataset, sweep, cell, seed) forecast `.npz`; regenerates every table/figure without
+  retraining.
+- **Reference checkpoints (not the reproduction path):**
+  [`SuryanshSS1011/provision-aware-checkpoints`](https://huggingface.co/SuryanshSS1011/provision-aware-checkpoints)
+  — example final-run weights, one per architecture. Illustrative only; retrain from the seed list
+  for canonical models.
+
+Raw traffic data is not rehosted — use the download instructions above. (Both repos may be private
+until the camera-ready release.)
