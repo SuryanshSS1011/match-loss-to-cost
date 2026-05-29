@@ -23,10 +23,10 @@ fi
 run_one() {
   local ds="$1"
   local log="logs/${ds}_calib_$(date +%H%M).log"
-  echo "=== ${ds^^} calibration sweep → $log ==="
+  echo "=== $(echo "$ds" | tr '[:lower:]' '[:upper:]') calibration sweep → $log ==="
   {
     for ta in 0.05 0.10 0.20; do
-      echo "=== ${ds^^} target_alpha=$ta ==="
+      echo "=== $(echo "$ds" | tr '[:lower:]' '[:upper:]') target_alpha=$ta ==="
       PYTHONPATH=. .venv/bin/python scripts/run_experiments.py \
         --dataset "$ds" --loss asym --alpha 5 --beta 1 \
         --seeds $SEEDS \
@@ -35,7 +35,7 @@ run_one() {
         --target-alpha "$ta" \
         --output-dir "results/${ds}_calib_pareto/alpha_${ta}"
     done
-    echo "=== DONE ${ds^^} $(date) ==="
+    echo "=== DONE $(echo "$ds" | tr '[:lower:]' '[:upper:]') $(date) ==="
   } > "$log" 2>&1
 }
 
