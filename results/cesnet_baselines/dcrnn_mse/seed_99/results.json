@@ -1,0 +1,25 @@
+{
+  "seed": 99,
+  "dataset": "cesnet",
+  "loss": "mse",
+  "T_eff": 7624,
+  "num_links": 20,
+  "models": {
+    "DCRNN": {
+      "forecast": {
+        "rmse_mean": 23.60837173461914,
+        "mae_mean": 13.52531909942627,
+        "mape_mean": 47.879487895965575,
+        "smape_mean": 36.98988723754883
+      },
+      "operational": {
+        "overload_rate": 0.006925498426023085,
+        "sla_violation_rate": 0.006925498426023085,
+        "over_provisioning_cost": 28752752.0,
+        "asymmetric_op_cost": 28801688.0,
+        "u_max_mean": 3.2731704711914062,
+        "u_max_max": 7.524764060974121
+      }
+    }
+  }
+}

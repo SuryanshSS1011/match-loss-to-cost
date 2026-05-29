@@ -1,0 +1,25 @@
+{
+  "seed": 512,
+  "dataset": "abilene",
+  "loss": "mse",
+  "T_eff": 9606,
+  "num_links": 54,
+  "models": {
+    "DCRNN": {
+      "forecast": {
+        "rmse_mean": 56.00083923339844,
+        "mae_mean": 21.057456970214844,
+        "mape_mean": 9.615513068658334,
+        "smape_mean": 9.572025299072266
+      },
+      "operational": {
+        "overload_rate": 0.0042334651953640084,
+        "sla_violation_rate": 0.0042334651953640084,
+        "over_provisioning_cost": 890372032.0,
+        "asymmetric_op_cost": 891129920.0,
+        "u_max_mean": 1.090358853340149,
+        "u_max_max": 2.234137773513794
+      }
+    }
+  }
+}

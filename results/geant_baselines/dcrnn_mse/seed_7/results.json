@@ -1,0 +1,25 @@
+{
+  "seed": 7,
+  "dataset": "geant",
+  "loss": "mse",
+  "T_eff": 2083,
+  "num_links": 58,
+  "models": {
+    "DCRNN": {
+      "forecast": {
+        "rmse_mean": 1461.6351318359375,
+        "mae_mean": 1336.89697265625,
+        "mape_mean": 601.6857147134583,
+        "smape_mean": 132.96572875976562
+      },
+      "operational": {
+        "overload_rate": 0.27758372374062606,
+        "sla_violation_rate": 0.27758372374062606,
+        "over_provisioning_cost": 146622368.0,
+        "asymmetric_op_cost": 192092512.0,
+        "u_max_mean": 186904628690944.0,
+        "u_max_max": 2641998397833216.0
+      }
+    }
+  }
+}

@@ -1,817 +1,85 @@
 {
-  "num_seeds": 20,
-  "seeds": [
-    42,
-    123,
-    456,
-    789,
-    1024,
-    1,
-    2,
-    3,
-    7,
-    13,
-    17,
-    99,
-    256,
-    512,
-    2048,
-    31337,
-    8191,
-    65521,
-    100003,
-    271828
-  ],
-  "dataset": "abilene",
-  "loss": "asym_l1",
+  "error": "all seeds failed",
   "per_seed": [
     {
       "seed": 42,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 184.21212768554688,
-            "mae_mean": 88.75857543945312,
-            "mape_mean": 42.57641428488272,
-            "smape_mean": 34.39560317993164
-          },
-          "operational": {
-            "overload_rate": 0.0816966247946885,
-            "sla_violation_rate": 0.0816966247946885,
-            "over_provisioning_cost": 224932320.0,
-            "asymmetric_op_cost": 247329200.0,
-            "u_max_mean": 2.9065277576446533,
-            "u_max_max": 9.027584075927734
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 123,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 183.80987548828125,
-            "mae_mean": 92.10755920410156,
-            "mape_mean": 42.583739598592125,
-            "smape_mean": 34.03180694580078
-          },
-          "operational": {
-            "overload_rate": 0.06593679876003423,
-            "sla_violation_rate": 0.06593679876003423,
-            "over_provisioning_cost": 273484864.0,
-            "asymmetric_op_cost": 294497408.0,
-            "u_max_mean": 2.6674702167510986,
-            "u_max_max": 8.739394187927246
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 456,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 190.62059020996094,
-            "mae_mean": 98.05122375488281,
-            "mape_mean": 47.09691330238625,
-            "smape_mean": 36.53349304199219
-          },
-          "operational": {
-            "overload_rate": 0.07601923180728094,
-            "sla_violation_rate": 0.07601923180728094,
-            "over_provisioning_cost": 249191840.0,
-            "asymmetric_op_cost": 272098144.0,
-            "u_max_mean": 2.855497360229492,
-            "u_max_max": 8.294926643371582
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 789,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 180.19187927246094,
-            "mae_mean": 88.32637786865234,
-            "mape_mean": 45.144188280458806,
-            "smape_mean": 34.94760513305664
-          },
-          "operational": {
-            "overload_rate": 0.06739422120433988,
-            "sla_violation_rate": 0.06739422120433988,
-            "over_provisioning_cost": 256220160.0,
-            "asymmetric_op_cost": 276818752.0,
-            "u_max_mean": 2.645833730697632,
-            "u_max_max": 7.715120315551758
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 1024,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 182.44166564941406,
-            "mae_mean": 89.6370620727539,
-            "mape_mean": 42.77893859368783,
-            "smape_mean": 34.561092376708984
-          },
-          "operational": {
-            "overload_rate": 0.07517677994463337,
-            "sla_violation_rate": 0.07517677994463337,
-            "over_provisioning_cost": 275610976.0,
-            "asymmetric_op_cost": 295389920.0,
-            "u_max_mean": 2.732731580734253,
-            "u_max_max": 10.606371879577637
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 1,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 189.9293212890625,
-            "mae_mean": 97.70602416992188,
-            "mape_mean": 49.03844944636027,
-            "smape_mean": 37.16973114013672
-          },
-          "operational": {
-            "overload_rate": 0.07837886814568056,
-            "sla_violation_rate": 0.07837886814568056,
-            "over_provisioning_cost": 239625312.0,
-            "asymmetric_op_cost": 261138272.0,
-            "u_max_mean": 2.799983501434326,
-            "u_max_max": 9.543701171875
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 2,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 197.43011474609375,
-            "mae_mean": 100.93125915527344,
-            "mape_mean": 48.40656723799529,
-            "smape_mean": 37.549659729003906
-          },
-          "operational": {
-            "overload_rate": 0.08520908999776375,
-            "sla_violation_rate": 0.08520908999776375,
-            "over_provisioning_cost": 235797168.0,
-            "asymmetric_op_cost": 257853440.0,
-            "u_max_mean": 2.8857533931732178,
-            "u_max_max": 8.85045337677002
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 3,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 192.5677032470703,
-            "mae_mean": 98.01299285888672,
-            "mape_mean": 45.56652074389987,
-            "smape_mean": 35.74441146850586
-          },
-          "operational": {
-            "overload_rate": 0.07190529067480972,
-            "sla_violation_rate": 0.07190529067480972,
-            "over_provisioning_cost": 233721952.0,
-            "asymmetric_op_cost": 256557952.0,
-            "u_max_mean": 2.8931639194488525,
-            "u_max_max": 8.536346435546875
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 7,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 200.7683868408203,
-            "mae_mean": 100.88751220703125,
-            "mape_mean": 49.899753146701386,
-            "smape_mean": 37.59723663330078
-          },
-          "operational": {
-            "overload_rate": 0.0824195525944433,
-            "sla_violation_rate": 0.0824195525944433,
-            "over_provisioning_cost": 207947472.0,
-            "asymmetric_op_cost": 233293200.0,
-            "u_max_mean": 3.1455087661743164,
-            "u_max_max": 8.778485298156738
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 13,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 198.31597900390625,
-            "mae_mean": 102.99932098388672,
-            "mape_mean": 48.208974838256836,
-            "smape_mean": 37.61822509765625
-          },
-          "operational": {
-            "overload_rate": 0.08174289217387282,
-            "sla_violation_rate": 0.08174289217387282,
-            "over_provisioning_cost": 215853792.0,
-            "asymmetric_op_cost": 239651344.0,
-            "u_max_mean": 3.0216686725616455,
-            "u_max_max": 8.711499214172363
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 17,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 189.6895294189453,
-            "mae_mean": 95.47119903564453,
-            "mape_mean": 46.064925299750435,
-            "smape_mean": 36.15655517578125
-          },
-          "operational": {
-            "overload_rate": 0.08309814082247978,
-            "sla_violation_rate": 0.08309814082247978,
-            "over_provisioning_cost": 240252464.0,
-            "asymmetric_op_cost": 263681760.0,
-            "u_max_mean": 2.9008936882019043,
-            "u_max_max": 9.073210716247559
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 99,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 182.82359313964844,
-            "mae_mean": 95.54072570800781,
-            "mape_mean": 45.55070742854365,
-            "smape_mean": 35.98487854003906
-          },
-          "operational": {
-            "overload_rate": 0.08126094030736962,
-            "sla_violation_rate": 0.08126094030736962,
-            "over_provisioning_cost": 275506144.0,
-            "asymmetric_op_cost": 296613152.0,
-            "u_max_mean": 2.75567626953125,
-            "u_max_max": 9.478063583374023
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 256,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 187.3894500732422,
-            "mae_mean": 96.90620422363281,
-            "mape_mean": 49.50622162995515,
-            "smape_mean": 37.187522888183594
-          },
-          "operational": {
-            "overload_rate": 0.07831139488437011,
-            "sla_violation_rate": 0.07831139488437011,
-            "over_provisioning_cost": 297097408.0,
-            "asymmetric_op_cost": 318478304.0,
-            "u_max_mean": 2.622816562652588,
-            "u_max_max": 9.13554859161377
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 512,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 186.4493865966797,
-            "mae_mean": 86.10157775878906,
-            "mape_mean": 40.95112835919416,
-            "smape_mean": 33.18971252441406
-          },
-          "operational": {
-            "overload_rate": 0.07135200993206406,
-            "sla_violation_rate": 0.07135200993206406,
-            "over_provisioning_cost": 232013568.0,
-            "asymmetric_op_cost": 254638864.0,
-            "u_max_mean": 2.832371711730957,
-            "u_max_max": 8.457948684692383
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 2048,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 186.8443603515625,
-            "mae_mean": 91.36951446533203,
-            "mape_mean": 44.43382372679534,
-            "smape_mean": 34.9112548828125
-          },
-          "operational": {
-            "overload_rate": 0.07544860079734117,
-            "sla_violation_rate": 0.07544860079734117,
-            "over_provisioning_cost": 235260672.0,
-            "asymmetric_op_cost": 257239712.0,
-            "u_max_mean": 2.8196916580200195,
-            "u_max_max": 8.923768997192383
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 31337,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 193.24114990234375,
-            "mae_mean": 96.39189910888672,
-            "mape_mean": 46.253612959826434,
-            "smape_mean": 38.82328414916992
-          },
-          "operational": {
-            "overload_rate": 0.0847483440133867,
-            "sla_violation_rate": 0.0847483440133867,
-            "over_provisioning_cost": 245323680.0,
-            "asymmetric_op_cost": 268519584.0,
-            "u_max_mean": 2.89553165435791,
-            "u_max_max": 8.881325721740723
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 8191,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 189.20596313476562,
-            "mae_mean": 89.98388671875,
-            "mape_mean": 42.77520610668041,
-            "smape_mean": 34.25794982910156
-          },
-          "operational": {
-            "overload_rate": 0.0831463360091301,
-            "sla_violation_rate": 0.0831463360091301,
-            "over_provisioning_cost": 225774848.0,
-            "asymmetric_op_cost": 249232464.0,
-            "u_max_mean": 2.9931790828704834,
-            "u_max_max": 9.237631797790527
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 65521,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 195.52516174316406,
-            "mae_mean": 97.44599151611328,
-            "mape_mean": 48.434765851056135,
-            "smape_mean": 37.0738639831543
-          },
-          "operational": {
-            "overload_rate": 0.06619126934554792,
-            "sla_violation_rate": 0.06619126934554792,
-            "over_provisioning_cost": 235592864.0,
-            "asymmetric_op_cost": 256514384.0,
-            "u_max_mean": 2.726846694946289,
-            "u_max_max": 7.986814975738525
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 100003,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 202.9741973876953,
-            "mae_mean": 108.33883666992188,
-            "mape_mean": 52.372595963654696,
-            "smape_mean": 38.793155670166016
-          },
-          "operational": {
-            "overload_rate": 0.07477194037677069,
-            "sla_violation_rate": 0.07477194037677069,
-            "over_provisioning_cost": 212741920.0,
-            "asymmetric_op_cost": 236750016.0,
-            "u_max_mean": 3.008512496948242,
-            "u_max_max": 8.480753898620605
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     },
     {
       "seed": 271828,
-      "dataset": "abilene",
-      "loss": "asym_l1",
-      "T_eff": 9606,
-      "num_links": 54,
-      "models": {
-        "LSTM": {
-          "forecast": {
-            "rmse_mean": 192.66734313964844,
-            "mae_mean": 96.47979736328125,
-            "mape_mean": 45.551115424544726,
-            "smape_mean": 35.78141403198242
-          },
-          "operational": {
-            "overload_rate": 0.06941456342872125,
-            "sla_violation_rate": 0.06941456342872125,
-            "over_provisioning_cost": 217100768.0,
-            "asymmetric_op_cost": 238262336.0,
-            "u_max_mean": 2.91035795211792,
-            "u_max_max": 9.064844131469727
-          }
-        }
-      }
+      "error": "patchtst: MPSGaph does not support tensor dims larger than INT_MAX"
     }
-  ],
-  "models": {
-    "LSTM": {
-      "forecast": {
-        "rmse_mean": {
-          "mean": 190.35488891601562,
-          "std": 6.196829438935514,
-          "min": 180.19187927246094,
-          "max": 202.9741973876953,
-          "values": [
-            184.21212768554688,
-            183.80987548828125,
-            190.62059020996094,
-            180.19187927246094,
-            182.44166564941406,
-            189.9293212890625,
-            197.43011474609375,
-            192.5677032470703,
-            200.7683868408203,
-            198.31597900390625,
-            189.6895294189453,
-            182.82359313964844,
-            187.3894500732422,
-            186.4493865966797,
-            186.8443603515625,
-            193.24114990234375,
-            189.20596313476562,
-            195.52516174316406,
-            202.9741973876953,
-            192.66734313964844
-          ]
-        },
-        "mae_mean": {
-          "mean": 95.57237701416015,
-          "std": 5.4005390307855095,
-          "min": 86.10157775878906,
-          "max": 108.33883666992188,
-          "values": [
-            88.75857543945312,
-            92.10755920410156,
-            98.05122375488281,
-            88.32637786865234,
-            89.6370620727539,
-            97.70602416992188,
-            100.93125915527344,
-            98.01299285888672,
-            100.88751220703125,
-            102.99932098388672,
-            95.47119903564453,
-            95.54072570800781,
-            96.90620422363281,
-            86.10157775878906,
-            91.36951446533203,
-            96.39189910888672,
-            89.98388671875,
-            97.44599151611328,
-            108.33883666992188,
-            96.47979736328125
-          ]
-        },
-        "mape_mean": {
-          "mean": 46.15972811116113,
-          "std": 2.899470041123563,
-          "min": 40.95112835919416,
-          "max": 52.372595963654696,
-          "values": [
-            42.57641428488272,
-            42.583739598592125,
-            47.09691330238625,
-            45.144188280458806,
-            42.77893859368783,
-            49.03844944636027,
-            48.40656723799529,
-            45.56652074389987,
-            49.899753146701386,
-            48.208974838256836,
-            46.064925299750435,
-            45.55070742854365,
-            49.50622162995515,
-            40.95112835919416,
-            44.43382372679534,
-            46.253612959826434,
-            42.77520610668041,
-            48.434765851056135,
-            52.372595963654696,
-            45.551115424544726
-          ]
-        },
-        "smape_mean": {
-          "mean": 36.11542282104492,
-          "std": 1.5680445362783866,
-          "min": 33.18971252441406,
-          "max": 38.82328414916992,
-          "values": [
-            34.39560317993164,
-            34.03180694580078,
-            36.53349304199219,
-            34.94760513305664,
-            34.561092376708984,
-            37.16973114013672,
-            37.549659729003906,
-            35.74441146850586,
-            37.59723663330078,
-            37.61822509765625,
-            36.15655517578125,
-            35.98487854003906,
-            37.187522888183594,
-            33.18971252441406,
-            34.9112548828125,
-            38.82328414916992,
-            34.25794982910156,
-            37.0738639831543,
-            38.793155670166016,
-            35.78141403198242
-          ]
-        }
-      },
-      "operational": {
-        "overload_rate": {
-          "mean": 0.07668114450073642,
-          "std": 0.006142494558148975,
-          "min": 0.06593679876003423,
-          "max": 0.08520908999776375,
-          "values": [
-            0.0816966247946885,
-            0.06593679876003423,
-            0.07601923180728094,
-            0.06739422120433988,
-            0.07517677994463337,
-            0.07837886814568056,
-            0.08520908999776375,
-            0.07190529067480972,
-            0.0824195525944433,
-            0.08174289217387282,
-            0.08309814082247978,
-            0.08126094030736962,
-            0.07831139488437011,
-            0.07135200993206406,
-            0.07544860079734117,
-            0.0847483440133867,
-            0.0831463360091301,
-            0.06619126934554792,
-            0.07477194037677069,
-            0.06941456342872125
-          ]
-        },
-        "sla_violation_rate": {
-          "mean": 0.07668114450073642,
-          "std": 0.006142494558148975,
-          "min": 0.06593679876003423,
-          "max": 0.08520908999776375,
-          "values": [
-            0.0816966247946885,
-            0.06593679876003423,
-            0.07601923180728094,
-            0.06739422120433988,
-            0.07517677994463337,
-            0.07837886814568056,
-            0.08520908999776375,
-            0.07190529067480972,
-            0.0824195525944433,
-            0.08174289217387282,
-            0.08309814082247978,
-            0.08126094030736962,
-            0.07831139488437011,
-            0.07135200993206406,
-            0.07544860079734117,
-            0.0847483440133867,
-            0.0831463360091301,
-            0.06619126934554792,
-            0.07477194037677069,
-            0.06941456342872125
-          ]
-        },
-        "over_provisioning_cost": {
-          "mean": 241452509.6,
-          "std": 23145224.096631337,
-          "min": 207947472.0,
-          "max": 297097408.0,
-          "values": [
-            224932320.0,
-            273484864.0,
-            249191840.0,
-            256220160.0,
-            275610976.0,
-            239625312.0,
-            235797168.0,
-            233721952.0,
-            207947472.0,
-            215853792.0,
-            240252464.0,
-            275506144.0,
-            297097408.0,
-            232013568.0,
-            235260672.0,
-            245323680.0,
-            225774848.0,
-            235592864.0,
-            212741920.0,
-            217100768.0
-          ]
-        },
-        "asymmetric_op_cost": {
-          "mean": 263727910.4,
-          "std": 22274806.08182963,
-          "min": 233293200.0,
-          "max": 318478304.0,
-          "values": [
-            247329200.0,
-            294497408.0,
-            272098144.0,
-            276818752.0,
-            295389920.0,
-            261138272.0,
-            257853440.0,
-            256557952.0,
-            233293200.0,
-            239651344.0,
-            263681760.0,
-            296613152.0,
-            318478304.0,
-            254638864.0,
-            257239712.0,
-            268519584.0,
-            249232464.0,
-            256514384.0,
-            236750016.0,
-            238262336.0
-          ]
-        },
-        "u_max_mean": {
-          "mean": 2.8510008335113524,
-          "std": 0.13138403624152406,
-          "min": 2.622816562652588,
-          "max": 3.1455087661743164,
-          "values": [
-            2.9065277576446533,
-            2.6674702167510986,
-            2.855497360229492,
-            2.645833730697632,
-            2.732731580734253,
-            2.799983501434326,
-            2.8857533931732178,
-            2.8931639194488525,
-            3.1455087661743164,
-            3.0216686725616455,
-            2.9008936882019043,
-            2.75567626953125,
-            2.622816562652588,
-            2.832371711730957,
-            2.8196916580200195,
-            2.89553165435791,
-            2.9931790828704834,
-            2.726846694946289,
-            3.008512496948242,
-            2.91035795211792
-          ]
-        },
-        "u_max_max": {
-          "mean": 8.876189684867859,
-          "std": 0.5949222190397749,
-          "min": 7.715120315551758,
-          "max": 10.606371879577637,
-          "values": [
-            9.027584075927734,
-            8.739394187927246,
-            8.294926643371582,
-            7.715120315551758,
-            10.606371879577637,
-            9.543701171875,
-            8.85045337677002,
-            8.536346435546875,
-            8.778485298156738,
-            8.711499214172363,
-            9.073210716247559,
-            9.478063583374023,
-            9.13554859161377,
-            8.457948684692383,
-            8.923768997192383,
-            8.881325721740723,
-            9.237631797790527,
-            7.986814975738525,
-            8.480753898620605,
-            9.064844131469727
-          ]
-        }
-      }
-    }
-  }
+  ]
 }

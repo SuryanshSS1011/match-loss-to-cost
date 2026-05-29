@@ -6,10 +6,11 @@
   "beta": 1.0,
   "tau": null,
   "models": [
-    "lstm"
+    "dlinear",
+    "itransformer"
   ],
   "git": {
-    "commit": "465fe905881915ffaa97863c1aaa1c0b55736bd1",
+    "commit": "d8b587735f9213817d8f9054befca866b373d4a1",
     "dirty": true
   },
   "config": {
@@ -37,7 +38,7 @@
     "sarima_test_steps": "288",
     "sarima_train_window": "4032",
     "sarima_link_subset": "8",
-    "sarima_n_jobs": "2",
+    "sarima_n_jobs": "1",
     "lstm_hidden_size": "64",
     "lstm_num_layers": "2",
     "lstm_epochs": "50",
@@ -81,5 +82,5 @@
     "total_time_steps": "4032",
     "seasonal_period": "288"
   },
-  "timestamp": "2026-05-27T03:34:02.114959"
+  "timestamp": "2026-05-28T18:55:58.416423"
 }

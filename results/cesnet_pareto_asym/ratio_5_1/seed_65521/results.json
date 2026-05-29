@@ -5,20 +5,36 @@
   "T_eff": 7624,
   "num_links": 20,
   "models": {
-    "LSTM": {
+    "DLinear": {
       "forecast": {
-        "rmse_mean": 36.769832611083984,
-        "mae_mean": 29.642730712890625,
-        "mape_mean": 173.68388481140136,
-        "smape_mean": 68.78790283203125
+        "rmse_mean": 30.670455932617188,
+        "mae_mean": 22.802358627319336,
+        "mape_mean": 102.78389549255371,
+        "smape_mean": 55.90616989135742
       },
       "operational": {
-        "overload_rate": 0.04287775445960126,
-        "sla_violation_rate": 0.04287775445960126,
-        "over_provisioning_cost": 12484480.0,
-        "asymmetric_op_cost": 13573307.0,
-        "u_max_mean": 5.702458381652832,
-        "u_max_max": 11.527679443359375
+        "overload_rate": 0.0010296432318992654,
+        "sla_violation_rate": 0.0010296432318992654,
+        "over_provisioning_cost": 43917216.0,
+        "asymmetric_op_cost": 43976928.0,
+        "u_max_mean": 1.9215902090072632,
+        "u_max_max": 3.6379899978637695
+      }
+    },
+    "iTransformer": {
+      "forecast": {
+        "rmse_mean": 27.647247314453125,
+        "mae_mean": 18.477924346923828,
+        "mape_mean": 70.65655336380004,
+        "smape_mean": 45.492431640625
+      },
+      "operational": {
+        "overload_rate": 0.0010558761804826862,
+        "sla_violation_rate": 0.0010558761804826862,
+        "over_provisioning_cost": 45412288.0,
+        "asymmetric_op_cost": 45470120.0,
+        "u_max_mean": 1.980286955833435,
+        "u_max_max": 3.4157540798187256
       }
     }
   }
