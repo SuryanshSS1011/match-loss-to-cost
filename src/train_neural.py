@@ -42,6 +42,12 @@ from .utils import (
 
 
 def _pick_device() -> torch.device:
+    # PROVISION_AWARE_DEVICE=cpu lets a caller force CPU for one trainer
+    # without disabling MPS globally. Used for PatchTST/Abilene where the
+    # MPSGraph constructor hits INT_MAX on the long-time-axis dataset.
+    forced = os.environ.get("PROVISION_AWARE_DEVICE", "").lower()
+    if forced in ("cpu", "cuda", "mps"):
+        return torch.device(forced)
     if torch.cuda.is_available():
         return torch.device("cuda")
     if torch.backends.mps.is_available():
