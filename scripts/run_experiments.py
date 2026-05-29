@@ -117,8 +117,15 @@ def _override_config(seed: int, dataset: str, loss: str,
         config_module.CONFIG["loss_tau"] = tau
 
 
-def _load_predictions_for_model(model: str, window_size: int) -> dict:
+def _load_predictions_for_model(model: str, window_size: int,
+                                source_dir: Optional[str] = None) -> dict:
     """Load one model's saved predictions. Returns {preds, L_test_aligned}.
+
+    `source_dir` (preferred): read from `<source_dir>/<model>_predictions.npz`.
+    Used by the runner to read the per-seed copy and avoid the
+    cross-dataset race on the bare RESULTS_DIR root when multiple
+    concurrent sweeps share that directory. Falls back to RESULTS_DIR
+    when `source_dir` is omitted (legacy single-sweep callers).
 
     Neural models write `<model>_predictions.npz` with `predictions`
     already aligned to `L_test[window_size:]`. SARIMA-like models
@@ -127,15 +134,16 @@ def _load_predictions_for_model(model: str, window_size: int) -> dict:
     drop the first `window_size` rows to align with the neural
     ground-truth slice.
     """
+    base = source_dir if source_dir is not None else RESULTS_DIR
     if model in SARIMA_LIKE_MODELS:
-        npz = np.load(os.path.join(RESULTS_DIR, f"{model}_predictions.npz"))
+        npz = np.load(os.path.join(base, f"{model}_predictions.npz"))
         preds_full = np.asarray(npz["predictions"], dtype=np.float32)
         L_full = np.asarray(npz["L_test"], dtype=np.float32)
         return {
             "preds": preds_full[window_size:],
             "L_test_aligned": L_full[window_size:],
         }
-    npz = np.load(os.path.join(RESULTS_DIR, f"{model}_predictions.npz"))
+    npz = np.load(os.path.join(base, f"{model}_predictions.npz"))
     return {
         "preds": np.asarray(npz["predictions"], dtype=np.float32),
         "L_test_aligned": np.asarray(npz["L_test_aligned"], dtype=np.float32),
@@ -427,18 +435,31 @@ def run_single_seed(seed: int, *, dataset: str, loss: str,
                     "error": f"missing dataset npz at {dataset_path()} — "
                              "run the loader first"}
 
-    # 2. Train each requested model in turn.
+    # 2. Train each requested model in turn. Immediately after each model
+    #    trains we copy its prediction artefact from the (shared) RESULTS_DIR
+    #    root into this seed's directory. Concurrent sweeps from different
+    #    datasets all write to the same root path, so any read after the next
+    #    trainer runs would race; copying NOW captures THIS sweep's output
+    #    while it's still the current root file.
     for model in models:
         try:
             _run_trainer(model)
         except Exception as e:
             return {"seed": seed, "error": f"{model}: {e}"}
+        # Race-safe per-seed copy: do it before training the next model so the
+        # next trainer's overwrite of the root npz cannot corrupt our copy.
+        fname = f"{model}_predictions.npz"
+        src_p = os.path.join(RESULTS_DIR, fname)
+        if os.path.exists(src_p):
+            shutil.copy2(src_p, os.path.join(seed_dir, fname))
 
-    # 3. Operational metrics, one entry per model.
+    # 3. Operational metrics, one entry per model. Read from this seed's dir
+    #    (race-safe per-seed copies above), not the shared root.
     try:
         margin = cfg["capacity_margin"]
         window = cfg["window_size"]
-        loaded = {m: _load_predictions_for_model(m, window) for m in models}
+        loaded = {m: _load_predictions_for_model(m, window, source_dir=seed_dir)
+                  for m in models}
         aligned = _align_models(loaded)
         y_true = aligned["L_test_aligned"]
         per_model = {
@@ -504,12 +525,10 @@ def run_single_seed(seed: int, *, dataset: str, loss: str,
 
     save_json(result, os.path.join(seed_dir, "results.json"))
 
-    # 5. Copy per-seed prediction artefacts so a seed dir is self-contained.
-    for m in models:
-        fname = f"{m}_predictions.npz"
-        src_p = os.path.join(RESULTS_DIR, fname)
-        if os.path.exists(src_p):
-            shutil.copy2(src_p, os.path.join(seed_dir, fname))
+    # 5. Per-seed prediction npz files were already copied inline above
+    #    (immediately after each trainer, before the next one could overwrite
+    #    the shared RESULTS_DIR file). Only the calibration band artefacts
+    #    written by _train_pinball_band still need copying here.
     if calibration != "none":
         for m in [x for x in models if x in NEURAL_MODELS]:
             for suffix in ("qlo", "qhi"):
