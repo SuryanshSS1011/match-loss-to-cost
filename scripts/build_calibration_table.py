@@ -154,8 +154,9 @@ def main() -> None:
                               "cqr_w": None, "aci_w": None})
             else:
                 cells.append({"target": ta, **cell})
+        plain_names = {"abilene": "Abilene", "geant": "GÉANT", "cesnet": "CESNET"}
         rows.append({"display": DATASET_DISPLAY[ds],
-                     "plain": ds.upper() if ds == "cesnet" else ds.capitalize(),
+                     "plain": plain_names.get(ds, ds.capitalize()),
                      "cells": cells})
 
     build_tex(rows, Path(args.output_tex))
