@@ -37,8 +37,16 @@ TARGETS = (0.05, 0.10, 0.20)
 
 
 def _read_cell(dataset: str, target_alpha: float, base: Path) -> dict | None:
-    path = base / f"{dataset}_calib_pareto" / f"alpha_{target_alpha:g}" / "aggregated_results.json"
-    if not path.exists():
+    # Two on-disk forms exist because different launchers used different
+    # formatters. The :g form drops trailing zeros (0.10 → 0.1); literal
+    # bash interpolation preserves them (0.10 → 0.10). Accept either.
+    canonical = f"alpha_{target_alpha:g}"
+    literal = f"alpha_{target_alpha:.2f}"
+    for d in (canonical, literal):
+        path = base / f"{dataset}_calib_pareto" / d / "aggregated_results.json"
+        if path.exists():
+            break
+    else:
         return None
     with open(path) as f:
         d = json.load(f)

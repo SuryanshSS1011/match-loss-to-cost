@@ -40,5 +40,6 @@ run_one() {
 }
 
 run_one cesnet
-run_one abilene
+# Skip Abilene: results/abilene_calib_pareto/alpha_{0.05,0.1,0.2}/aggregated_results.json
+# already exist at 20 seeds from an earlier run. Saves ~3h wall-clock.
 echo "=== CASCADE COMPLETE $(date) ==="
