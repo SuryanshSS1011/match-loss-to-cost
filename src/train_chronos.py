@@ -110,8 +110,10 @@ def _rolling_predictions(
                 for t in range(batch_start, batch_end)
             ]
             # Chronos accepts a list of 1-D tensors as a batched call.
+            # chronos-forecasting >=2.0 takes contexts as positional `inputs=`;
+            # earlier versions used the `context=` kwarg.
             forecasts = pipeline.predict(
-                context=contexts,
+                contexts,
                 prediction_length=1,
             )
             # `forecasts` shape per the chronos API: (B, num_samples, 1) for
