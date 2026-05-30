@@ -46,31 +46,38 @@ run_one() {
 
 # Launch in batches of PARALLEL. Wait for each batch to finish before
 # starting the next so we don't oversubscribe. A failed seed is logged
-# but does not abort the sweep — `wait $pid || true` swallows the
-# non-zero exit and surfaces it in the summary at the end.
-declare -a FAILED=()
-batch=()
-declare -A pid_to_seed
+# but does not abort the sweep — we collect failed seeds in a flat array
+# and surface them in the summary at the end. (Indexed-array bookkeeping
+# instead of `declare -A` because macOS ships bash 3.2 which does not
+# support associative arrays — same family of bug as ${var^^} fixed in
+# the cascade script.)
+FAILED=()
+batch_pids=()
+batch_seeds=()
 for seed in $SEEDS; do
   run_one "$seed"
-  pid=$!
-  batch+=("$pid")
-  pid_to_seed[$pid]=$seed
-  if [[ ${#batch[@]} -ge $PARALLEL ]]; then
-    for p in "${batch[@]}"; do
-      if ! wait "$p"; then
-        FAILED+=("${pid_to_seed[$p]}")
+  batch_pids+=("$!")
+  batch_seeds+=("$seed")
+  if [[ ${#batch_pids[@]} -ge $PARALLEL ]]; then
+    i=0
+    while [[ $i -lt ${#batch_pids[@]} ]]; do
+      if ! wait "${batch_pids[$i]}"; then
+        FAILED+=("${batch_seeds[$i]}")
       fi
+      i=$((i+1))
     done
-    batch=()
+    batch_pids=()
+    batch_seeds=()
     echo "[$(date +%H:%M:%S)] batch of $PARALLEL complete  failed-so-far=${#FAILED[@]}"
   fi
 done
 # Drain any remaining
-for p in "${batch[@]}"; do
-  if ! wait "$p"; then
-    FAILED+=("${pid_to_seed[$p]}")
+i=0
+while [[ $i -lt ${#batch_pids[@]} ]]; do
+  if ! wait "${batch_pids[$i]}"; then
+    FAILED+=("${batch_seeds[$i]}")
   fi
+  i=$((i+1))
 done
 
 echo "[$(date +%H:%M:%S)] === SWEEP DONE ==="
