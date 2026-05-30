@@ -45,6 +45,12 @@ sys.path.insert(0, PROJECT_ROOT)
 # Column ordering and metadata. Each entry: (display_name, JSON path,
 # group, lower_is_better, percent, fmt). `group` mirrors the runner's
 # block names so we can pull from the aggregated JSON without remapping.
+# `display_name` is also the row-lookup key, so changing it requires
+# also updating LATEX_HEADER_OVERRIDES below if the new name has LaTeX
+# special characters.
+LATEX_HEADER_OVERRIDES = {
+    "U_max mean": r"$U_{\max}$ mean",
+}
 HEADLINE_COLUMNS = [
     # operational (lower is better)
     ("Asym. op. cost", "asymmetric_op_cost", "operational", True, False, "{:.2f}"),
@@ -175,7 +181,9 @@ def render_latex(
         lines.append(rf"\label{{{label}}}")
     lines.append(rf"\begin{{tabular}}{{{col_spec}}}")
     lines.append(r"\toprule")
-    header = "Model & " + " & ".join(c[0] for c in visible_cols) + r" \\"
+    header = "Model & " + " & ".join(
+        LATEX_HEADER_OVERRIDES.get(c[0], c[0]) for c in visible_cols
+    ) + r" \\"
     lines.append(header)
     lines.append(r"\midrule")
     for i, row in enumerate(rows):
