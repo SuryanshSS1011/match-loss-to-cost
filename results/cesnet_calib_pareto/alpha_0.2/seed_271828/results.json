@@ -1,0 +1,98 @@
+{
+  "seed": 271828,
+  "dataset": "cesnet",
+  "loss": "asym",
+  "T_eff": 7624,
+  "num_links": 20,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 36.850486755371094,
+        "mae_mean": 29.40915870666504,
+        "mape_mean": 174.02376747131348,
+        "smape_mean": 68.96449279785156
+      },
+      "operational": {
+        "overload_rate": 0.03912644281217209,
+        "sla_violation_rate": 0.03912644281217209,
+        "over_provisioning_cost": 12380642.0,
+        "asymmetric_op_cost": 13450343.0,
+        "u_max_mean": 5.672010898590088,
+        "u_max_max": 10.136523246765137
+      }
+    },
+    "LSTM_CQR": {
+      "forecast": {
+        "rmse_mean": null,
+        "mae_mean": null,
+        "mape_mean": null,
+        "smape_mean": null
+      },
+      "operational": {
+        "overload_rate": 0.01921563483735572,
+        "sla_violation_rate": 0.01921563483735572,
+        "over_provisioning_cost": 16255624.979165995,
+        "asymmetric_op_cost": 16923174.45218464,
+        "u_max_mean": 4.714308023096345,
+        "u_max_max": 8.247501159248037
+      },
+      "calibration": {
+        "method": "cqr",
+        "target_alpha": 0.2,
+        "qhat_mean": 8.211036247014999,
+        "qhat_per_link": [
+          51.95233154296875,
+          9.590190887451172,
+          11.387413024902344,
+          11.217506408691406,
+          1.644588589668274,
+          6.412505626678467,
+          19.13168716430664,
+          1.7110748291015625,
+          7.392817497253418,
+          3.514549732208252,
+          9.024001121520996,
+          1.552107334136963,
+          6.834600448608398,
+          6.917902946472168,
+          3.3360519409179688,
+          3.3269081115722656,
+          5.441653251647949,
+          2.6859724521636963,
+          1.2652206420898438,
+          -0.11835861206054688
+        ],
+        "coverage_overall": 0.7424186778593914,
+        "mean_width": 72.30079650878906
+      }
+    },
+    "LSTM_ACI": {
+      "forecast": {
+        "rmse_mean": null,
+        "mae_mean": null,
+        "mape_mean": null,
+        "smape_mean": null
+      },
+      "operational": {
+        "overload_rate": 0.015464323189926547,
+        "sla_violation_rate": 0.015464323189926547,
+        "over_provisioning_cost": 18862594.58979603,
+        "asymmetric_op_cost": 19363378.063764535,
+        "u_max_mean": 4.367466427781471,
+        "u_max_max": 8.523463176427352
+      },
+      "calibration": {
+        "method": "aci",
+        "target_alpha": 0.2,
+        "gamma": 0.005,
+        "window": 500,
+        "qhat_mean": 8.422501146793365,
+        "alpha_final_mean": 0.19524999999999995,
+        "coverage_overall": 0.7867589192025184,
+        "mean_width": 71.45880889892578
+      }
+    }
+  },
+  "calibration": "both",
+  "target_alpha": 0.2
+}
