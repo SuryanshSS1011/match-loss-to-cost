@@ -11,9 +11,6 @@ The architecture is held fixed across loss variants, so the contribution is the 
 rather than a new model. The earlier synthetic 12-node SARIMA vs. LSTM comparison is retained only as
 a topology-size ablation in the appendix.
 
-> The HuggingFace repo slugs `provision-aware-*` keep the old short name as a stable URL identifier
-> while the project itself uses the canonical "Provisioning-Aware" title that matches the paper.
-
 ---
 
 ## Headline findings (real Abilene/GÉANT/CESNET, LSTM backbone, 20 seeds)
@@ -216,14 +213,12 @@ cross-topology generalization study are planned as a journal or INFOCOM extensio
 ## Artifacts on HuggingFace
 
 - **Predictions (reproduction path):**
-  [`SuryanshSS1011/provision-aware-predictions`](https://huggingface.co/datasets/SuryanshSS1011/provision-aware-predictions)
+  [`SuryanshSS1011/provisioning-aware-predictions`](https://huggingface.co/datasets/SuryanshSS1011/provisioning-aware-predictions)
   carries per-(dataset, sweep, cell, seed) forecast `.npz` files and regenerates every table and
   figure without retraining.
 - **Reference checkpoints (illustrative, not the reproduction path):**
-  [`SuryanshSS1011/provision-aware-checkpoints`](https://huggingface.co/SuryanshSS1011/provision-aware-checkpoints)
+  [`SuryanshSS1011/provisioning-aware-checkpoints`](https://huggingface.co/SuryanshSS1011/provisioning-aware-checkpoints)
   carries one example end-of-run weight file per architecture. These are illustrative only, so for
   canonical models, retrain from the seed list above.
 
-Raw traffic data is not rehosted, so use the dataset download instructions above. Both HF repos
-keep the legacy `provision-aware-*` slug as a stable URL identifier while the project itself uses
-the canonical "Provisioning-Aware" name from the paper title.
+Raw traffic data is not rehosted, so use the dataset download instructions above.

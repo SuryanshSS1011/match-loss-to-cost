@@ -91,3 +91,6 @@ Thumbs.db
 *.lof
 *.lot
 # report/*.pdf  # Keep PDF for easy viewing on GitHub
+# HF publish script (one-off, contains repo-specific upload logic; not committed per project convention)
+scripts/publish_to_hf.py
+scripts/rename_hf_repos.py
