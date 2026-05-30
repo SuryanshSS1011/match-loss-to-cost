@@ -73,13 +73,11 @@ def _format_width(v: float | None) -> str:
 
 
 def build_tex(rows: list[dict], output_tex: Path) -> None:
+    # Emit ONLY the inner tabular content; paper.tex wraps this with
+    # \begin{table}...\caption...\label...\end{table}. Emitting the
+    # outer wrapper here would nest two table environments, which is
+    # a LaTeX error.
     lines = [
-        r"\begin{table}[t]",
-        r"\centering",
-        r"\caption{Empirical coverage and mean band width across the three "
-        r"datasets (LSTM, $20$ seeds). ACI attains the target coverage; "
-        r"split-CQR under-covers under temporal drift.}",
-        r"\label{tab:calibration}",
         r"\begin{tabular}{llcccc}",
         r"\toprule",
         r"& & \multicolumn{2}{c}{Coverage} & \multicolumn{2}{c}{Mean width} \\",
@@ -109,7 +107,7 @@ def build_tex(rows: list[dict], output_tex: Path) -> None:
             )
         if ds_idx < len(rows) - 1:
             lines.append(r"\midrule")
-    lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
     output_tex.parent.mkdir(parents=True, exist_ok=True)
     output_tex.write_text("\n".join(lines) + "\n")
     print(f"[calib] wrote {output_tex}")

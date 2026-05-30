@@ -66,8 +66,30 @@ HEADLINE_COLUMNS = [
 ]
 
 
+def _to_scientific(x: float) -> str:
+    """Render `x` as `a.aa \\times 10^{n}` (LaTeX math, 3 sig figs).
+
+    Returns plain `{x:.2f}` for `|x| < 1000` so small numbers stay readable
+    (e.g. RMSE, MAE values).
+    """
+    if not x or abs(x) < 1000:
+        return f"{x:.2f}"
+    import math
+    sign = "-" if x < 0 else ""
+    x = abs(x)
+    exp = int(math.floor(math.log10(x)))
+    mantissa = x / (10 ** exp)
+    return rf"{sign}{mantissa:.2f}{{\times}}10^{{{exp}}}"
+
+
 def _format_value(stat: Optional[dict], fmt: str, percent: bool) -> str:
-    """Render a {mean, std} stat dict as 'mean ± std' (or '—' if missing)."""
+    """Render a {mean, std} stat dict as 'mean ± std' (or '--' if missing).
+
+    Values whose magnitude exceeds 1000 (typical for cost columns measured
+    in raw bytes) are auto-rendered in scientific notation to keep the
+    table inside the IEEE column width; smaller values fall through to
+    the per-column `fmt` spec.
+    """
     if stat is None or stat.get("mean") is None:
         return "--"
     mean = stat["mean"]
@@ -76,6 +98,9 @@ def _format_value(stat: Optional[dict], fmt: str, percent: bool) -> str:
         mean *= 100.0
         std *= 100.0
         out = fmt.format(mean) + r"\% $\pm$ " + fmt.format(std) + r"\%"
+    elif abs(mean) >= 1000 or abs(std) >= 1000:
+        # cost-scale numbers: compact scientific notation
+        out = r"$" + _to_scientific(mean) + r"$ $\pm$ $" + _to_scientific(std) + r"$"
     else:
         out = fmt.format(mean) + r" $\pm$ " + fmt.format(std)
     return out
@@ -172,8 +197,11 @@ def render_latex(
     col_spec = "l" + "r" * len(visible_cols)
     best = bold_best_indices(rows) if bold_best else {}
 
+    # Use the two-column-spanning `table*` env: 7 columns of mean ± std
+    # do not fit inside an IEEE single-column width even with scientific
+    # notation, so we let these tables span both columns.
     lines: list[str] = []
-    lines.append(r"\begin{table}[t]")
+    lines.append(r"\begin{table*}[t]")
     lines.append(r"\centering")
     if caption:
         lines.append(rf"\caption{{{caption}}}")
@@ -197,7 +225,7 @@ def render_latex(
         lines.append(" & ".join(cells) + r" \\")
     lines.append(r"\bottomrule")
     lines.append(r"\end{tabular}")
-    lines.append(r"\end{table}")
+    lines.append(r"\end{table*}")
     return "\n".join(lines) + "\n"
 
 
