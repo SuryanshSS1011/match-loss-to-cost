@@ -45,17 +45,39 @@ run_one() {
 }
 
 # Launch in batches of PARALLEL. Wait for each batch to finish before
-# starting the next so we don't oversubscribe.
+# starting the next so we don't oversubscribe. A failed seed is logged
+# but does not abort the sweep — `wait $pid || true` swallows the
+# non-zero exit and surfaces it in the summary at the end.
+declare -a FAILED=()
 batch=()
+declare -A pid_to_seed
 for seed in $SEEDS; do
   run_one "$seed"
-  batch+=("$!")
+  pid=$!
+  batch+=("$pid")
+  pid_to_seed[$pid]=$seed
   if [[ ${#batch[@]} -ge $PARALLEL ]]; then
-    for pid in "${batch[@]}"; do wait "$pid"; done
+    for p in "${batch[@]}"; do
+      if ! wait "$p"; then
+        FAILED+=("${pid_to_seed[$p]}")
+      fi
+    done
     batch=()
-    echo "[$(date +%H:%M:%S)] batch of $PARALLEL complete"
+    echo "[$(date +%H:%M:%S)] batch of $PARALLEL complete  failed-so-far=${#FAILED[@]}"
   fi
 done
 # Drain any remaining
-for pid in "${batch[@]}"; do wait "$pid"; done
-echo "[$(date +%H:%M:%S)] === ALL 20 SEEDS DONE ==="
+for p in "${batch[@]}"; do
+  if ! wait "$p"; then
+    FAILED+=("${pid_to_seed[$p]}")
+  fi
+done
+
+echo "[$(date +%H:%M:%S)] === SWEEP DONE ==="
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+  echo "  WARNING: ${#FAILED[@]} seed(s) failed: ${FAILED[*]}"
+  echo "  Check logs/patchtst_abilene_cpu_seed_<S>.log for details."
+  exit 1
+else
+  echo "  All 20 seeds completed cleanly."
+fi
