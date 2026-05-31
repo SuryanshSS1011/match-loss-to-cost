@@ -78,10 +78,12 @@ def discover_cells(pareto_dir: str) -> list[tuple[str, float, float, str]]:
     return cells
 
 
-def load_cell_predictions(cell_dir: str) -> list[tuple[np.ndarray, np.ndarray]]:
+def load_cell_predictions(cell_dir: str,
+                          model: str = "lstm",
+                          ) -> list[tuple[np.ndarray, np.ndarray]]:
     """Return [(predictions, y_true), ...] one entry per seed.
 
-    Reads each seed_*/lstm_predictions.npz; ignores cells without seed
+    Reads each seed_*/<model>_predictions.npz; ignores cells without seed
     subdirs. Cells with missing/corrupt npz are silently skipped to keep
     the heatmap robust to partial sweeps.
     """
@@ -89,7 +91,7 @@ def load_cell_predictions(cell_dir: str) -> list[tuple[np.ndarray, np.ndarray]]:
     for entry in sorted(os.listdir(cell_dir)):
         if not entry.startswith("seed_"):
             continue
-        npz_path = os.path.join(cell_dir, entry, "lstm_predictions.npz")
+        npz_path = os.path.join(cell_dir, entry, f"{model}_predictions.npz")
         if not os.path.exists(npz_path):
             continue
         try:
@@ -404,6 +406,10 @@ def main() -> None:
                         help="default: plots/operator_eval_<dataset>_<loss_form>.png")
     parser.add_argument("--summary-path", default=None,
                         help="default: <pareto_base_dir>/operator_eval.json")
+    parser.add_argument("--model", default="lstm",
+                        choices=("lstm", "dlinear", "itransformer", "patchtst",
+                                 "dcrnn", "chronos"),
+                        help="model whose per-seed npz to read (default: lstm).")
     args = parser.parse_args()
 
     pareto_dir = args.pareto_base_dir or os.path.join(
@@ -423,7 +429,7 @@ def main() -> None:
     matrix: dict[str, dict[str, Optional[float]]] = {}
     cell_labels: list[str] = []
     for label, _, _, path in cells:
-        seeds = load_cell_predictions(path)
+        seeds = load_cell_predictions(path, model=args.model)
         print(f"  [{label}] {len(seeds)} seeds with predictions")
         matrix[label] = evaluate_cell(seeds, operator_grid)
         cell_labels.append(label)
@@ -437,8 +443,11 @@ def main() -> None:
         "matrix": matrix,
         "best_per_operator": best,
     }
+    # When --model is not the default (lstm), append the model name to the
+    # output paths so we don't clobber the LSTM operator-eval artifact.
+    model_suffix = "" if args.model == "lstm" else f"_{args.model}"
     summary_path = args.summary_path or os.path.join(
-        pareto_dir, "operator_eval.json"
+        pareto_dir, f"operator_eval{model_suffix}.json"
     )
     os.makedirs(os.path.dirname(summary_path) or ".", exist_ok=True)
     with open(summary_path, "w") as f:
@@ -446,7 +455,7 @@ def main() -> None:
     print(f"[operator-eval] wrote {summary_path}")
 
     plot_path = args.plot_path or os.path.join(
-        PLOTS_DIR, f"operator_eval_{args.dataset}_{args.loss_form}.png"
+        PLOTS_DIR, f"operator_eval_{args.dataset}_{args.loss_form}{model_suffix}.png"
     )
     plot_heatmap(matrix, cell_labels, operator_grid, plot_path,
                  dataset=args.dataset)
