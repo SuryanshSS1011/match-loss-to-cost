@@ -187,12 +187,22 @@ def render_latex(
     bold_best: bool = True,
     caption: Optional[str] = None,
     label: Optional[str] = None,
+    hide_columns: Optional[list[str]] = None,
 ) -> str:
-    """Emit a complete `\\begin{table}...\\end{table}` LaTeX snippet."""
+    """Emit a complete `\\begin{table}...\\end{table}` LaTeX snippet.
+
+    `hide_columns` accepts display labels (e.g. ``"U_max mean"``) or JSON
+    keys (e.g. ``"u_max_mean"``) and suppresses matching columns even if
+    they have non-missing values; used to drop the per-link utilisation
+    column on datasets where the squared-loss collapse produces
+    interpretation-breaking magnitudes.
+    """
+    hide_columns = set(hide_columns or [])
     visible_cols = [
         (label_, key, group, lib, pct, fmt)
         for (label_, key, group, lib, pct, fmt) in HEADLINE_COLUMNS
         if column_visible(label_, rows)
+           and label_ not in hide_columns and key not in hide_columns
     ]
     col_spec = "l" + "r" * len(visible_cols)
     best = bold_best_indices(rows) if bold_best else {}
@@ -229,11 +239,14 @@ def render_latex(
     return "\n".join(lines) + "\n"
 
 
-def render_markdown(rows: list[dict], bold_best: bool = True) -> str:
+def render_markdown(rows: list[dict], bold_best: bool = True,
+                    hide_columns: Optional[list[str]] = None) -> str:
+    hide_columns = set(hide_columns or [])
     visible_cols = [
         (label_, key, group, lib, pct, fmt)
         for (label_, key, group, lib, pct, fmt) in HEADLINE_COLUMNS
         if column_visible(label_, rows)
+           and label_ not in hide_columns and key not in hide_columns
     ]
     best = bold_best_indices(rows) if bold_best else {}
 
@@ -266,6 +279,9 @@ def main() -> None:
     parser.add_argument("--no-bold-best", action="store_true")
     parser.add_argument("--caption", default=None)
     parser.add_argument("--label", default=None)
+    parser.add_argument("--hide-columns", nargs="+", default=None,
+                        help="suppress these columns by display label or "
+                             "JSON key (e.g. 'u_max_mean')")
     args = parser.parse_args()
 
     if args.names is not None and len(args.names) != len(args.inputs):
@@ -282,7 +298,8 @@ def main() -> None:
 
     bold = not args.no_bold_best
     latex = render_latex(rows, bold_best=bold,
-                          caption=args.caption, label=args.label)
+                          caption=args.caption, label=args.label,
+                          hide_columns=args.hide_columns)
 
     if args.output:
         with open(args.output, "w") as f:
@@ -291,13 +308,15 @@ def main() -> None:
         if args.markdown:
             md_path = os.path.splitext(args.output)[0] + ".md"
             with open(md_path, "w") as f:
-                f.write(render_markdown(rows, bold_best=bold))
+                f.write(render_markdown(rows, bold_best=bold,
+                                         hide_columns=args.hide_columns))
             print(f"[table] wrote {md_path}")
     else:
         print(latex)
         if args.markdown:
             print()
-            print(render_markdown(rows, bold_best=bold))
+            print(render_markdown(rows, bold_best=bold,
+                                   hide_columns=args.hide_columns))
 
 
 if __name__ == "__main__":
