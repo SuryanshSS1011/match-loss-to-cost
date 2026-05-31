@@ -1,6 +1,6 @@
-# Provisioning-Aware Traffic Forecasting: Asymmetric Losses and Conformal Capacity Bands
+# Match Your Loss to Your Cost: Asymmetric Losses and Conformal Capacity Bands for Backbone Traffic Forecasting
 
-Research code for the *Provisioning-Aware Traffic Forecasting* paper (target: **CNSM 2026**). The
+Research code for the *Match Your Loss to Your Cost* paper (target: **CNSM 2026**). The
 thesis is that backbone operators minimise the **joint cost of SLA violations and over-provisioning**
 rather than RMSE, so training a forecaster on an **asymmetric capacity-cost surrogate** and wrapping
 it in **adaptive conformal prediction** reduces operational cost and SLA-violation rate at equal RMSE
@@ -213,11 +213,11 @@ cross-topology generalization study are planned as a journal or INFOCOM extensio
 ## Artifacts on HuggingFace
 
 - **Predictions (reproduction path):**
-  [`SuryanshSS1011/provisioning-aware-predictions`](https://huggingface.co/datasets/SuryanshSS1011/provisioning-aware-predictions)
+  [`SuryanshSS1011/match-loss-to-cost-predictions`](https://huggingface.co/datasets/SuryanshSS1011/match-loss-to-cost-predictions)
   carries per-(dataset, sweep, cell, seed) forecast `.npz` files and regenerates every table and
   figure without retraining.
 - **Reference checkpoints (illustrative, not the reproduction path):**
-  [`SuryanshSS1011/provisioning-aware-checkpoints`](https://huggingface.co/SuryanshSS1011/provisioning-aware-checkpoints)
+  [`SuryanshSS1011/match-loss-to-cost-checkpoints`](https://huggingface.co/SuryanshSS1011/match-loss-to-cost-checkpoints)
   carries one example end-of-run weight file per architecture. These are illustrative only, so for
   canonical models, retrain from the seed list above.
 
