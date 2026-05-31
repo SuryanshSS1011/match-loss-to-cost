@@ -1,0 +1,25 @@
+{
+  "seed": 17,
+  "dataset": "cesnet",
+  "loss": "pinball",
+  "T_eff": 7624,
+  "num_links": 20,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 38.349449157714844,
+        "mae_mean": 31.2618465423584,
+        "mape_mean": 170.75020446777344,
+        "smape_mean": 69.10188293457031
+      },
+      "operational": {
+        "overload_rate": 0.049842602308499476,
+        "sla_violation_rate": 0.049842602308499476,
+        "over_provisioning_cost": 11927099.0,
+        "asymmetric_op_cost": 13072880.0,
+        "u_max_mean": 6.238857746124268,
+        "u_max_max": 10.600494384765625
+      }
+    }
+  }
+}

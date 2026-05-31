@@ -1,0 +1,25 @@
+{
+  "seed": 65521,
+  "dataset": "geant",
+  "loss": "pinball",
+  "T_eff": 2083,
+  "num_links": 58,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 1676.8936767578125,
+        "mae_mean": 1644.5155029296875,
+        "mape_mean": 562.8325731014384,
+        "smape_mean": 122.59917449951172
+      },
+      "operational": {
+        "overload_rate": 0.3529723376429884,
+        "sla_violation_rate": 0.3529723376429884,
+        "over_provisioning_cost": 180905792.0,
+        "asymmetric_op_cost": 426596512.0,
+        "u_max_mean": 147910100516864.0,
+        "u_max_max": 1721138753306624.0
+      }
+    }
+  }
+}

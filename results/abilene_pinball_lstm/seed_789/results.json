@@ -1,0 +1,25 @@
+{
+  "seed": 789,
+  "dataset": "abilene",
+  "loss": "pinball",
+  "T_eff": 9606,
+  "num_links": 54,
+  "models": {
+    "LSTM": {
+      "forecast": {
+        "rmse_mean": 178.34686279296875,
+        "mae_mean": 107.15650177001953,
+        "mape_mean": 59.84637452937938,
+        "smape_mean": 40.777591705322266
+      },
+      "operational": {
+        "overload_rate": 0.05511794326077066,
+        "sla_violation_rate": 0.05511794326077066,
+        "over_provisioning_cost": 339553056.0,
+        "asymmetric_op_cost": 379341312.0,
+        "u_max_mean": 2.3186819553375244,
+        "u_max_max": 6.8242950439453125
+      }
+    }
+  }
+}
