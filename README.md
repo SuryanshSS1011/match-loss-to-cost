@@ -1,5 +1,8 @@
 # Match Your Loss to Your Cost: Asymmetric Losses and Conformal Capacity Bands for Backbone Traffic Forecasting
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21018259.svg)](https://doi.org/10.5281/zenodo.21018259)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Research code for the *Match Your Loss to Your Cost* paper (target: **CNSM 2026**). The
 thesis is that backbone operators minimise the **joint cost of SLA violations and over-provisioning**
 rather than RMSE, so training a forecaster on an **asymmetric capacity-cost surrogate** and wrapping
@@ -222,3 +225,22 @@ cross-topology generalization study are planned as a journal or INFOCOM extensio
   canonical models, retrain from the seed list above.
 
 Raw traffic data is not rehosted, so use the dataset download instructions above.
+
+## Citation
+
+If you use this code, please cite the archived release (concept DOI, resolves to the latest version):
+
+```bibtex
+@software{sijwali_match_loss_to_cost,
+  author  = {Sijwali, Suryansh Singh},
+  title   = {Match Your Loss to Your Cost: Asymmetric Losses and Conformal
+             Capacity Bands for Backbone Traffic Forecasting},
+  year    = {2026},
+  doi     = {10.5281/zenodo.21018259},
+  url     = {https://doi.org/10.5281/zenodo.21018259}
+}
+```
+
+## License
+
+Released under the [MIT License](LICENSE).
