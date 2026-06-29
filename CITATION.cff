@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "Match Your Loss to Your Cost: Asymmetric Losses and Conformal Capacity Bands for Backbone Traffic Forecasting"
+abstract: >-
+  Research code for the paper "Match Your Loss to Your Cost". Backbone operators
+  minimise the joint cost of SLA violations and over-provisioning rather than RMSE.
+  Training a forecaster on an asymmetric capacity-cost surrogate and wrapping it in
+  adaptive conformal prediction reduces operational cost and SLA-violation rate at
+  equal RMSE versus an MSE-trained baseline, demonstrated on three real backbone
+  traces (Abilene, GEANT, CESNET-TimeSeries24) across six forecaster architectures.
+type: software
+authors:
+  - family-names: Sijwali
+    given-names: Suryansh Singh
+    affiliation: "Pennsylvania State University"
+    orcid: "https://orcid.org/0009-0005-7739-1657"
+repository-code: "https://github.com/SuryanshSS1011/match-loss-to-cost"
+version: 1.0.0
+date-released: "2026-06-28"
+keywords:
+  - traffic forecasting
+  - capacity planning
+  - asymmetric loss
+  - conformal prediction
+  - decision-focused learning
